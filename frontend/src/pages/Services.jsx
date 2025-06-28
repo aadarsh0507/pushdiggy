@@ -1,19 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle, Star, Filter } from 'lucide-react';
-import { services } from '../data/sampleData';
 
 const Services = () => {
+  const [services, setServices] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
 
-  const categories = ['All', ...new Set(services.map(service => service.category))];
-  
-  const filteredServices = selectedCategory === 'All' 
-    ? services 
+  // Fetch services from backend
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const res = await fetch('/api/services');
+        const data = await res.json();
+        setServices(data);
+      } catch (err) {
+        // Optionally handle error
+      }
+    };
+    fetchServices();
+  }, []);
+
+  const categories = ['All', ...new Set(services.map(service => service.category || 'Other'))];
+
+  const filteredServices = selectedCategory === 'All'
+    ? services
     : services.filter(service => service.category === selectedCategory);
 
   const getIcon = (iconName) => {
-    // This is a simplified icon mapping. In a real app, you'd import the actual icons
     const iconMap = {
       'Cloud': '☁️',
       'Shield': '🛡️',

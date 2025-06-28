@@ -1,59 +1,59 @@
-export const services = [
-  {
-    id: '1',
-    name: 'Cloud Infrastructure',
-    description: 'Scalable cloud solutions for modern businesses with enterprise-grade security and reliability.',
-    price: '₹2999/month',
-    features: ['24/7 Support', 'Auto Scaling', 'Backup & Recovery', 'Security Monitoring', 'Load Balancing'],
-    category: 'Infrastructure',
-    icon: 'Cloud'
-  },
-  {
-    id: '2',
-    name: 'Cybersecurity Suite',
-    description: 'Comprehensive security solutions to protect your business from evolving cyber threats.',
-    price: '₹1999/month',
-    features: ['Firewall Management', 'Threat Detection', 'Compliance Support', 'Security Training', 'Incident Response'],
-    category: 'Security',
-    icon: 'Shield'
-  },
-  {
-    id: '3',
-    name: 'Data Analytics',
-    description: 'Transform your data into actionable insights with advanced analytics and reporting.',
-    price: '$399/month',
-    features: ['Real-time Dashboards', 'Predictive Analytics', 'Custom Reports', 'Data Integration', 'ML Models'],
-    category: 'Analytics',
-    icon: 'BarChart3'
-  },
-  {
-    id: '4',
-    name: 'IT Consulting',
-    description: 'Strategic IT guidance for business growth and digital transformation.',
-    price: '$150/hour',
-    features: ['Technology Strategy', 'Digital Transformation', 'Process Optimization', 'ROI Analysis', 'Implementation'],
-    category: 'Consulting',
-    icon: 'Users'
-  },
-  {
-    id: '5',
-    name: 'Managed Services',
-    description: '24/7 IT support and management for your entire technology infrastructure.',
-    price: '$499/month',
-    features: ['Proactive Monitoring', 'Help Desk Support', 'Patch Management', 'Asset Management', 'Performance Optimization'],
-    category: 'Support',
-    icon: 'Settings'
-  },
-  {
-    id: '6',
-    name: 'Web Development',
-    description: 'Custom web applications and websites built with modern technologies.',
-    price: '$99/hour',
-    features: ['Responsive Design', 'E-commerce Solutions', 'CMS Integration', 'API Development', 'SEO Optimization'],
-    category: 'Development',
-    icon: 'Code'
-  }
-];
+// export const services = [
+//   {
+//     id: '1',
+//     name: 'Cloud Infrastructure',
+//     description: 'Scalable cloud solutions for modern businesses with enterprise-grade security and reliability.',
+//     price: '₹2999/month',
+//     features: ['24/7 Support', 'Auto Scaling', 'Backup & Recovery', 'Security Monitoring', 'Load Balancing'],
+//     category: 'Infrastructure',
+//     icon: 'Cloud'
+//   },
+//   {
+//     id: '2',
+//     name: 'Cybersecurity Suite',
+//     description: 'Comprehensive security solutions to protect your business from evolving cyber threats.',
+//     price: '₹1999/month',
+//     features: ['Firewall Management', 'Threat Detection', 'Compliance Support', 'Security Training', 'Incident Response'],
+//     category: 'Security',
+//     icon: 'Shield'
+//   },
+//   {
+//     id: '3',
+//     name: 'Data Analytics',
+//     description: 'Transform your data into actionable insights with advanced analytics and reporting.',
+//     price: '$399/month',
+//     features: ['Real-time Dashboards', 'Predictive Analytics', 'Custom Reports', 'Data Integration', 'ML Models'],
+//     category: 'Analytics',
+//     icon: 'BarChart3'
+//   },
+//   {
+//     id: '4',
+//     name: 'IT Consulting',
+//     description: 'Strategic IT guidance for business growth and digital transformation.',
+//     price: '$150/hour',
+//     features: ['Technology Strategy', 'Digital Transformation', 'Process Optimization', 'ROI Analysis', 'Implementation'],
+//     category: 'Consulting',
+//     icon: 'Users'
+//   },
+//   {
+//     id: '5',
+//     name: 'Managed Services',
+//     description: '24/7 IT support and management for your entire technology infrastructure.',
+//     price: '$499/month',
+//     features: ['Proactive Monitoring', 'Help Desk Support', 'Patch Management', 'Asset Management', 'Performance Optimization'],
+//     category: 'Support',
+//     icon: 'Settings'
+//   },
+//   {
+//     id: '6',
+//     name: 'Web Development',
+//     description: 'Custom web applications and websites built with modern technologies.',
+//     price: '$99/hour',
+//     features: ['Responsive Design', 'E-commerce Solutions', 'CMS Integration', 'API Development', 'SEO Optimization'],
+//     category: 'Development',
+//     icon: 'Code'
+//   }
+// ];
 
 export const clients = [
   {

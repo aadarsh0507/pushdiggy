@@ -1,21 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
-import { clients, messages, services as initialServices, supportRequests } from '../data/sampleData';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [services, setServices] = useState(initialServices);
+  const [services, setServices] = useState([]);
+  const [clients, setClients] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [editingService, setEditingService] = useState(null);
 
+  // Service form state
+  const [serviceForm, setServiceForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    features: ''
+  });
+
+  // Fetch clients from backend
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const res = await fetch('/api/clients');
+        const data = await res.json();
+        setClients(data);
+      } catch (err) {
+        // handle error (optional)
+      }
+    };
+    fetchClients();
+  }, []);
+
+  // Fetch services from backend
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const res = await fetch('/api/services');
+        const data = await res.json();
+        setServices(data);
+      } catch (err) {
+        // handle error (optional)
+      }
+    };
+    fetchServices();
+  }, []);
+
   const stats = {
     totalClients: clients.length,
     activeClients: clients.filter(c => c.status === 'active').length,
-    totalMessages: messages.length,
-    newMessages: messages.filter(m => m.status === 'new').length,
+    totalMessages: 0,
+    newMessages: 0,
     totalServices: services.length,
-    supportTickets: supportRequests.length
+    supportTickets: 0
   };
 
   const getStatusColor = (status) => {
@@ -44,9 +80,67 @@ const AdminDashboard = () => {
     }
   };
 
-  const deleteService = (serviceId) => {
-    setServices(services.filter(s => s.id !== serviceId));
+  const deleteService = async (serviceId) => {
+    try {
+      await fetch(`/api/services/${serviceId}`, { method: 'DELETE' });
+      setServices(services.filter(s => s._id !== serviceId));
+    } catch (err) {
+      // handle error (optional)
+    }
   };
+
+  // Handle service form input
+  const handleServiceFormChange = (e) => {
+    const { name, value } = e.target;
+    setServiceForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle add/edit service submit
+  const handleServiceSubmit = async (e) => {
+    e.preventDefault();
+    const featuresArr = serviceForm.features.split(',').map(f => f.trim()).filter(Boolean);
+
+    if (editingService) {
+      // Edit existing service (optional: implement PUT if needed)
+      // Not implemented here
+    } else {
+      // Add new service
+      try {
+        const res = await fetch('/api/services', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...serviceForm,
+            features: featuresArr
+          })
+        });
+        const newService = await res.json();
+        setServices([newService, ...services]);
+      } catch (err) {
+        // handle error (optional)
+      }
+    }
+    setShowServiceModal(false);
+    setEditingService(null);
+    setServiceForm({ name: '', description: '', price: '', features: '' });
+  };
+
+  // When editing, prefill form
+  useEffect(() => {
+    if (editingService) {
+      setServiceForm({
+        name: editingService.name,
+        description: editingService.description,
+        price: editingService.price,
+        features: editingService.features.join(', ')
+      });
+    } else {
+      setServiceForm({ name: '', description: '', price: '', features: '' });
+    }
+  }, [editingService, showServiceModal]);
 
   const renderOverview = () => (
     <div className="space-y-8">
@@ -110,20 +204,7 @@ const AdminDashboard = () => {
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Messages</h3>
               <div className="space-y-4">
-                {messages.slice(0, 3).map((message) => (
-                  <div key={message.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium text-gray-900">{message.subject}</h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(message.status)}`}>
-                          {message.status}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">From: {message.name}</p>
-                      <p className="text-xs text-gray-500">{message.date}</p>
-                    </div>
-                  </div>
-                ))}
+                <p className="text-gray-500">No messages to display.</p>
               </div>
             </div>
           </div>
@@ -132,21 +213,7 @@ const AdminDashboard = () => {
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Support Requests</h3>
               <div className="space-y-4">
-                {supportRequests.slice(0, 3).map((ticket) => (
-                  <div key={ticket.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium text-gray-900">{ticket.subject}</h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getStatusColor(ticket.priority)}`}>
-                          {getPriorityIcon(ticket.priority)}
-                          <span>{ticket.priority}</span>
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">Client: {ticket.clientName}</p>
-                      <p className="text-xs text-gray-500">{ticket.date}</p>
-                    </div>
-                  </div>
-                ))}
+                <p className="text-gray-500">No support requests to display.</p>
               </div>
             </div>
           </div>
@@ -188,7 +255,7 @@ const AdminDashboard = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{client.company}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.services.length} services</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.services?.length || 0} services</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
                       {client.status}
@@ -219,7 +286,10 @@ const AdminDashboard = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Service Management</h2>
         <button 
-          onClick={() => setShowServiceModal(true)}
+          onClick={() => {
+            setShowServiceModal(true);
+            setEditingService(null);
+          }}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -229,21 +299,19 @@ const AdminDashboard = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map((service) => (
-          <div key={service.id} className="bg-white rounded-lg shadow p-6">
+          <div key={service._id} className="bg-white rounded-lg shadow p-6">
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-lg font-semibold text-gray-900">{service.name}</h3>
               <div className="flex space-x-2">
+                {/* Edit functionality not implemented */}
                 <button 
-                  onClick={() => {
-                    setEditingService(service);
-                    setShowServiceModal(true);
-                  }}
                   className="text-blue-600 hover:text-blue-900"
+                  disabled
                 >
                   <Edit className="h-4 w-4" />
                 </button>
                 <button 
-                  onClick={() => deleteService(service.id)}
+                  onClick={() => deleteService(service._id)}
                   className="text-red-600 hover:text-red-900"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -253,7 +321,7 @@ const AdminDashboard = () => {
             <p className="text-gray-600 mb-4">{service.description}</p>
             <div className="text-xl font-bold text-blue-600 mb-4">{service.price}</div>
             <div className="space-y-2">
-              {service.features.slice(0, 3).map((feature, index) => (
+              {service.features && service.features.slice(0, 3).map((feature, index) => (
                 <div key={index} className="flex items-center text-sm text-gray-600">
                   <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
                   {feature}
@@ -263,13 +331,97 @@ const AdminDashboard = () => {
           </div>
         ))}
       </div>
+
+      {/* Service Modal */}
+      {showServiceModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">{editingService ? 'Edit Service' : 'Add Service'}</h3>
+                <button 
+                  onClick={() => {
+                    setShowServiceModal(false);
+                    setEditingService(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              <form onSubmit={handleServiceSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={serviceForm.name}
+                    onChange={handleServiceFormChange}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <textarea
+                    name="description"
+                    value={serviceForm.description}
+                    onChange={handleServiceFormChange}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Price</label>
+                  <input
+                    type="text"
+                    name="price"
+                    value={serviceForm.price}
+                    onChange={handleServiceFormChange}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Features (comma separated)</label>
+                  <input
+                    type="text"
+                    name="features"
+                    value={serviceForm.features}
+                    onChange={handleServiceFormChange}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  />
+                </div>
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowServiceModal(false);
+                      setEditingService(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  >
+                    {editingService ? 'Update' : 'Add'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
   const renderMessages = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Messages</h2>
-      
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -283,83 +435,15 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {messages.map((message) => (
-                <tr key={message.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{message.name}</div>
-                      <div className="text-sm text-gray-500">{message.email}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{message.subject}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{message.date}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(message.status)}`}>
-                      {message.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button 
-                      onClick={() => setSelectedMessage(message)}
-                      className="text-blue-600 hover:text-blue-900 mr-3"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              <tr>
+                <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                  No messages to display.
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
-
-      {/* Message Detail Modal */}
-      {selectedMessage && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Message Details</h3>
-                <button 
-                  onClick={() => setSelectedMessage(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">From</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedMessage.name} ({selectedMessage.email})</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Subject</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedMessage.subject}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Date</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedMessage.date}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Message</label>
-                  <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-4 rounded-lg">{selectedMessage.message}</p>
-                </div>
-              </div>
-              <div className="flex justify-end space-x-3 mt-6">
-                <button 
-                  onClick={() => setSelectedMessage(null)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                >
-                  Close
-                </button>
-                <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                  Reply
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 
