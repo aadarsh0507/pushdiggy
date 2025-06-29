@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, User, Shield, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
-  const [activeTab, setActiveTab] = useState('client');
+  const location = useLocation();
+  const errorLocation = location.state?.error;
+  const tabFromLocation = location.state?.tab;
+
+  const [activeTab, setActiveTab] = useState(tabFromLocation || 'client');
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -13,31 +17,66 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Set tab from location only once (on first mount)
+  useEffect(() => {
+    if (tabFromLocation) {
+      setActiveTab(tabFromLocation);
+    }
+  }, []); // Empty dependency to run only on first render
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
   };
 
+  const handleTabSwitch = (tab) => {
+    setActiveTab(tab);
+    setError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
+    setIsLoading(true);
 
     try {
-      const result = await login(formData.email, formData.password, activeTab); // pass role
+      const result = await login(formData.email, formData.password, activeTab);
+      console.log('LOGIN RESULT:', result);
 
       if (result.success) {
-        if (result.user.role !== activeTab) {
-          setError(`You are trying to log in as ${activeTab}, but your account is a ${result.user.role}.`);
-        } else {
-          navigate(result.user.role === 'admin' ? '/admin-dashboard' : '/client-dashboard');
+        const { user } = result;
+        console.log("USER INFO:", user);
+        console.log("User Status:", user.status);
+
+        // Prevent login if user role doesn't match active tab
+        if (user.role !== activeTab) {
+          setError(`You are trying to log in as ${activeTab}, but your account is a ${user.role}.`);
+          setIsLoading(false);
+          return;
         }
+
+        // Check deactivation only for clients
+        if (user.status && user.status !== 'active' && user.role === 'client') {
+          setError('Your account is deactivated. Please contact support.');
+          setIsLoading(false);
+          return;
+        }
+
+        // Navigate to respective dashboard
+        if (user.role === 'admin') {
+          navigate('/admin-dashboard');
+        } else {
+          navigate('/client-dashboard');
+        }
+
+        setIsLoading(false);
       } else {
         setError(result.error || 'Login failed');
+        setIsLoading(false);
       }
     } catch (err) {
-      setError('An unexpected error occurred');
-    } finally {
+      console.error('Login error:', err);
+      setError('Login failed');
       setIsLoading(false);
     }
   };
@@ -53,11 +92,8 @@ const Login = () => {
 
           <div className="flex rounded-lg bg-gray-100 p-1 mb-8">
             <button
-              onClick={() => {
-                setActiveTab('client');
-                setError('');
-                setFormData({ email: '', password: '' });
-              }}
+              type="button"
+              onClick={() => handleTabSwitch('client')}
               className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md font-medium transition-colors duration-200 ${
                 activeTab === 'client' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
@@ -66,11 +102,8 @@ const Login = () => {
               Client Login
             </button>
             <button
-              onClick={() => {
-                setActiveTab('admin');
-                setError('');
-                setFormData({ email: '', password: '' });
-              }}
+              type="button"
+              onClick={() => handleTabSwitch('admin')}
               className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md font-medium transition-colors duration-200 ${
                 activeTab === 'admin' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
@@ -80,11 +113,11 @@ const Login = () => {
             </button>
           </div>
 
-          {error && (
+          {(error || errorLocation) && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
               <div className="flex items-center">
                 <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-                <span className="text-sm text-red-700">{error}</span>
+                <span className="text-sm text-red-700">{error || errorLocation}</span>
               </div>
             </div>
           )}

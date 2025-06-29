@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, Star, Filter } from 'lucide-react';
+import api from '../api/api';
 
 const Services = () => {
   const [services, setServices] = useState([]);
@@ -10,11 +11,10 @@ const Services = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await fetch('/api/services');
-        const data = await res.json();
-        setServices(data);
+        const res = await api.get('/services');
+        setServices(res.data);
       } catch (err) {
-        // Optionally handle error
+        // handle error
       }
     };
     fetchServices();

@@ -1,24 +1,29 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext'; // ✅ Add this line
 
 const ProtectedRoute = ({ children, requiredRole }) => {
-  const { isAuthenticated, user, loading } = useAuth();
+  const { user, loading } = useAuth();
+  const location = useLocation();
 
-  if (loading) {
+  if (loading) return null; // You can return a loading spinner here
+
+  if (!user) {
+    return <Navigate to="/login" state={{ tab: requiredRole }} replace />;
+  }
+
+  if (user.status !== 'active') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
+      <Navigate
+        to="/login"
+        state={{ error: 'Your account is deactivated. Please contact support.' }}
+        replace
+      />
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to="/" replace />;
+  if (requiredRole && user.role !== requiredRole) {
+    return <Navigate to="/login" state={{ tab: user.role }} replace />;
   }
 
   return children;

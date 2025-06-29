@@ -1,36 +1,28 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import Admin from '../models/admin.js';
+import bcrypt from 'bcryptjs';
 
 const adminController = {
   async registerAdmin(req, res) {
     try {
-      const { name, email, password, employeeId, department, role, phone } = req.body;
+      const { name, email, password, employeeId, department, phone } = req.body;
 
-      if (!name || !email || !password || !employeeId || !department || !role || !phone) {
-        return res.status(400).json({ message: "All fields are required." });
-      }
-
-      // Check if admin already exists
+      // Check if email already exists
       const existingAdmin = await Admin.findOne({ email });
       if (existingAdmin) {
-        return res.status(409).json({ message: "Admin already exists." });
+        return res.status(409).json({ message: "Email already registered." });
       }
 
-      // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
-      console.log('Registering admin:', { email, password, hashedPassword });
 
-      // Create new admin
       const newAdmin = new Admin({
         name,
         email,
         password: hashedPassword,
         employeeId,
         department,
-        role: "admin", // always admin
-        designation: role, // store user-typed value as designation
-        phone
+        phone,
+        role: 'admin',
+        status: 'active' // All admins are active by default
       });
 
       await newAdmin.save();
@@ -44,7 +36,7 @@ const adminController = {
           employeeId: newAdmin.employeeId,
           department: newAdmin.department,
           role: newAdmin.role,
-          designation: newAdmin.designation, // include in response
+          status: newAdmin.status,
           phone: newAdmin.phone
         }
       });
@@ -61,34 +53,31 @@ const adminController = {
         return res.status(400).json({ message: "Email and password are required." });
       }
 
-      const admin = await Admin.findOne({ email });
+      // Find admin by email
+      const admin = await Admin.findOne({ email, role: 'admin' });
       if (!admin) {
         return res.status(404).json({ message: "Admin not found." });
       }
 
+      // Compare passwords
       const isMatch = await bcrypt.compare(password, admin.password);
       if (!isMatch) {
         return res.status(401).json({ message: "Invalid credentials." });
       }
 
-      const token = jwt.sign(
-        { id: admin._id, email: admin.email, role: admin.role },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" }
-      );
-
+      // Ensure only 'admin' role gets through this controller
       res.status(200).json({
         success: true,
         message: "Admin logged in successfully.",
-        token,
         user: {
           id: admin._id,
           name: admin.name,
           email: admin.email,
+          role: admin.role,
           employeeId: admin.employeeId,
           department: admin.department,
-          role: admin.role,
-          phone: admin.phone
+          phone: admin.phone,
+          status: admin.status
         }
       });
     } catch (error) {

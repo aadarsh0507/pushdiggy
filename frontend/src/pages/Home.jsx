@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Star, Users, Award, TrendingUp } from 'lucide-react';
+import api from '../api/api';
 
 const Home = () => {
   const [services, setServices] = useState([]);
@@ -10,11 +11,10 @@ const Home = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await fetch('/api/services');
-        const data = await res.json();
-        setServices(data);
+        const res = await api.get('/services');
+        setServices(res.data);
       } catch (err) {
-        // Optionally handle error
+        // handle error
       } finally {
         setLoading(false);
       }

@@ -11,6 +11,7 @@ import cors from 'cors';
 import adminRoutes from './routes/adminRoutes.js';
 import clientRoutes from './routes/clientRoutes.js';
 import otpRoutes from './routes/otpRoutes.js';
+import serviceRoutes from './routes/serviceRoutes.js';
 
 const app = express();
 
@@ -34,6 +35,8 @@ mongoose.connect(process.env.DATABASE_URL, {
 app.use('/api/admin', adminRoutes);
 app.use('/api/client', clientRoutes);
 app.use('/api/auth', otpRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/clients', clientRoutes);
 
 const PORT = process.env.PORT || 5000;
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Users, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Users, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, CheckCircle, Clock, AlertTriangle, ToggleLeft, ToggleRight } from 'lucide-react';
+import api from '../api/api';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -21,9 +22,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const res = await fetch('/api/clients');
-        const data = await res.json();
-        setClients(data);
+        const res = await api.get('/clients');
+        setClients(res.data);
+        console.log('Fetched clients:', res.data); // Add this line
       } catch (err) {
         // handle error (optional)
       }
@@ -35,9 +36,8 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await fetch('/api/services');
-        const data = await res.json();
-        setServices(data);
+        const res = await api.get('/services');
+        setServices(res.data);
       } catch (err) {
         // handle error (optional)
       }
@@ -107,18 +107,12 @@ const AdminDashboard = () => {
       // Edit existing service (optional: implement PUT if needed)
       // Not implemented here
     } else {
-      // Add new service
       try {
-        const res = await fetch('/api/services', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...serviceForm,
-            features: featuresArr
-          })
+        const res = await api.post('/services', {
+          ...serviceForm,
+          features: featuresArr
         });
-        const newService = await res.json();
-        setServices([newService, ...services]);
+        setServices([res.data, ...services]);
       } catch (err) {
         // handle error (optional)
       }
@@ -141,6 +135,16 @@ const AdminDashboard = () => {
       setServiceForm({ name: '', description: '', price: '', features: '' });
     }
   }, [editingService, showServiceModal]);
+
+  const handleToggleStatus = async (client) => {
+    const newStatus = client.status === 'active' ? 'inactive' : 'active';
+    try {
+      await api.put(`/clients/${client._id}/status`, { status: newStatus });
+      setClients(clients.map(c => c._id === client._id ? { ...c, status: newStatus } : c));
+    } catch (err) {
+      // handle error
+    }
+  };
 
   const renderOverview = () => (
     <div className="space-y-8">
@@ -226,10 +230,13 @@ const AdminDashboard = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Client Management</h2>
+        {/* Remove the Add Client button below */}
+        {/* 
         <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center">
           <Plus className="h-4 w-4 mr-2" />
           Add Client
         </button>
+        */}
       </div>
       
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -247,7 +254,7 @@ const AdminDashboard = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {clients.map((client) => (
-                <tr key={client.id} className="hover:bg-gray-50">
+                <tr key={client._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">{client.name}</div>
@@ -257,11 +264,24 @@ const AdminDashboard = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{client.company}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.services?.length || 0} services</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
+                    <button
+                      onClick={() => handleToggleStatus(client)}
+                      className={`focus:outline-none`}
+                      title={client.status === 'active' ? 'Deactivate' : 'Activate'}
+                    >
+                      {client.status === 'active' ? (
+                        <ToggleRight className="h-6 w-6 text-green-500" />
+                      ) : (
+                        <ToggleLeft className="h-6 w-6 text-gray-400" />
+                      )}
+                    </button>
+                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
                       {client.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.joinDate}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : ''}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <button className="text-blue-600 hover:text-blue-900">
