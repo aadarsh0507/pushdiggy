@@ -8,10 +8,10 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 
-import adminRoutes from './routes/adminRoutes.js';
-import clientRoutes from './routes/clientRoutes.js';
-import otpRoutes from './routes/otpRoutes.js';
-import serviceRoutes from './routes/serviceRoutes.js';
+import adminRoutes from './src/routes/adminRoutes.js';
+import clientRoutes from './src/routes/clientRoutes.js';
+import otpRoutes from './src/routes/otpRoutes.js';
+import serviceRoutes from './src/routes/serviceRoutes.js';
 
 const app = express();
 
