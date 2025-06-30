@@ -88,7 +88,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Phone</h3>
-                    <p className="text-gray-600">+1 (555) 123-4567</p>
+                    <p className="text-gray-600">91+ 8608706864</p>
                     <p className="text-sm text-gray-500">Mon-Fri 9:00 AM - 6:00 PM PST</p>
                   </div>
                 </div>
@@ -99,21 +99,21 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Email</h3>
-                    <p className="text-gray-600">info@technova.com</p>
+                    <p className="text-gray-600">pushdiggy@gmail.com</p>
                     <p className="text-sm text-gray-500">We'll respond within 24 hours</p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
+                {/* <div className="flex items-center space-x-4">
                   <div className="bg-blue-100 p-3 rounded-full">
                     <MapPin className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Office</h3>
-                    <p className="text-gray-600">123 Tech Street</p>
-                    <p className="text-gray-600">Silicon Valley, CA 94000</p>
+                 
+                   
                   </div>
-                </div>
+                </div> */}
 
                 <div className="flex items-center space-x-4">
                   <div className="bg-blue-100 p-3 rounded-full">

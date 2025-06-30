@@ -20,10 +20,10 @@ const Footer = () => {
               <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
+              {/* <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
                 <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
+              </a> */}
+              <a href="https://www.linkedin.com/company/push-diggy" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
                 <Linkedin className="h-5 w-5" />
               </a>
               <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
@@ -60,7 +60,7 @@ const Footer = () => {
           </div>
 
           {/* Services */}
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <h3 className="text-lg font-semibold">Services</h3>
             <ul className="space-y-2 text-gray-300">
               <li>Cloud Infrastructure</li>
@@ -70,7 +70,7 @@ const Footer = () => {
               <li>Managed Services</li>
               <li>Web Development</li>
             </ul>
-          </div>
+          </div> */}
 
           {/* Contact Info */}
           <div className="space-y-4">
