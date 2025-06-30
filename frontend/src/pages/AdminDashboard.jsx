@@ -503,13 +503,17 @@ const AdminDashboard = () => {
           </nav>
         </div>
 
+
+
         {/* Tab Content */}
-        <div>
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'clients' && renderClients()}
-          {activeTab === 'services' && renderServices()}
-          {activeTab === 'messages' && renderMessages()}
-        </div>
+      <div>
+  {activeTab === 'overview' && renderOverview()}
+  {activeTab === 'clients' && renderClients()}
+  {activeTab === 'services' && renderServices()}
+  {activeTab === 'messages' && renderMessages()}
+  {activeTab === 'billing' && renderBilling()} {/* ✅ Add this line */}
+</div>
+
       </div>
     </div>
   );
