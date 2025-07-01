@@ -12,12 +12,13 @@ import adminRoutes from './src/routes/adminRoutes.js';
 import clientRoutes from './src/routes/clientRoutes.js';
 import otpRoutes from './src/routes/otpRoutes.js';
 import serviceRoutes from './src/routes/serviceRoutes.js';
+import supportRoutes from './src/routes/supportRoutes.js'; // Import the new support routes
 
 const app = express();
 
 // CORS middleware FIRST
 app.use(cors({
-  origin: true,
+  origin: 'https://5173-firebase-pushdiggygit-1751345989139.cluster-isls3qj2gbd5qs4jkjqvhahfv6.cloudworkstations.dev',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -33,10 +34,10 @@ mongoose.connect(process.env.DATABASE_URL, {
 .catch(err => console.error('Database connection error:', err));
 
 app.use('/api/admin', adminRoutes);
-app.use('/api/client', clientRoutes);
+app.use('/api/clients', clientRoutes); // Keep only this one for clients
 app.use('/api/auth', otpRoutes);
 app.use('/api/services', serviceRoutes);
-app.use('/api/clients', clientRoutes);
+app.use('/api/support-requests', supportRoutes); // Use the new support routes
 
 const PORT = process.env.PORT || 5000;
 

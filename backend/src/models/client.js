@@ -8,7 +8,9 @@ const clientSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, default: 'client' },
   createdAt: { type: Date, default: Date.now },
-  status: { type: String, enum: ['active', 'inactive'], default: 'inactive' }
+  status: { type: String, enum: ['active', 'inactive', 'enquiry'], default: 'enquiry' },
+  amc: { type: Boolean, default: false },
+  inactiveDate: { type: Date }
 });
 
 const Client = mongoose.model('Client', clientSchema);

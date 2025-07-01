@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password, expectedRole) => {
     try {
-      let endpoint = '/client/login';
+      let endpoint = '/clients/login';
       if (expectedRole === 'admin') endpoint = '/admin/login';
       const res = await api.post(endpoint, { email, password });
 

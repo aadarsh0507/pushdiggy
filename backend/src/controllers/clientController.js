@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 
 export const registerClient = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, amc } = req.body;
     if (!name || !email || !password || !phone) {
       return res.status(400).json({ message: "All fields are required." });
     }
@@ -18,6 +18,8 @@ export const registerClient = async (req, res) => {
       password: hashedPassword,
       phone,
       joinDate: new Date(), // <-- Add this line if you want to set explicitly
+      amc: amc || false, // Add default or provided AMC status
+      status: 'enquiry', // Set default status to enquiry
     });
     await client.save();
     res.status(201).json(client);
@@ -64,14 +66,43 @@ export const getAllClients = async (req, res) => {
   res.json(clients);
 };
 
+export const getClientById = async (req, res) => {
+  try {
+    console.log('Fetching client with ID:', req.params.id);
+    const client = await Client.findById(req.params.id);
+    if (!client) {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+    res.status(200).json(client);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error.', error: error.message });
+  }
+};
+
 export const updateClientStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
-    const client = await Client.findByIdAndUpdate(id, { status }, { new: true });
-    if (!client) return res.status(404).json({ message: 'Client not found' });
-    res.json(client);
+    const clientId = req.params.id;
+    const { status, inactiveDate } = req.body; // Extract status and inactiveDate
+
+    const client = await Client.findById(clientId);
+
+    if (!client) {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+
+    client.status = status;
+    if (status === 'inactive' && inactiveDate) {
+      client.inactiveDate = new Date(inactiveDate); // Save the inactiveDate
+    } else if (status === 'active') {
+      client.inactiveDate = null; // Clear inactiveDate if status is active
+    }
+
+
+    await client.save();
+
+    res.status(200).json(client);
   } catch (error) {
-    res.status(500).json({ message: "Server error.", error: error.message });
+    console.error('Error updating client status:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
