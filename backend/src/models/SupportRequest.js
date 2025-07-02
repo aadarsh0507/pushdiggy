@@ -10,6 +10,9 @@ const supportRequestSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
+  company: { type: String, required: true, trim: true },
+  
   subject: {
     type: String,
     required: true,

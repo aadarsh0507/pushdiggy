@@ -16,6 +16,7 @@ const AdminDashboard = () => {
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState('All');
   const [editingService, setEditingService] = useState(null);
+  const [supportTicketsData, setSupportTicketsData] = useState([]);
 
   // Service form state
   const [serviceForm, setServiceForm] = useState({
@@ -52,14 +53,27 @@ const AdminDashboard = () => {
     fetchServices();
   }, []);
 
+  // Fetch support tickets from backend
+  useEffect(() => {
+    const fetchSupportTickets = async () => {
+      try {
+        const res = await api.get('/support-requests/all'); // Corrected endpoint to match backend
+        setSupportTicketsData(res.data);
+      } catch (err) {
+        console.error('Error fetching support tickets:', err);
+      }
+    };
+    fetchSupportTickets();
+  }, []); // Fetch when component mounts
+
   const stats = {
     totalClients: clients.length,
     activeClients: clients.filter(c => c.status === 'active').length,
     totalMessages: 0,
     newMessages: 0,
     totalServices: services.length,
-    supportTickets: 0
-  };
+  supportTickets: supportTicketsData.length // Use the length of the fetched data
+};
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -121,6 +135,9 @@ const AdminDashboard = () => {
     } else {
       try {
         const res = await api.post('/services', {
+            name: serviceForm.name,
+            description: serviceForm.description,
+            price: serviceForm.price,
           ...serviceForm,
           features: featuresArr
         });
@@ -129,6 +146,8 @@ const AdminDashboard = () => {
         console.error('Error creating service:', err);
       }
     }
+      // Clear form after successful submission (either create or update)
+      setServiceForm({ name: '', description: '', price: '', features: '' });
     setShowServiceModal(false);
     setEditingService(null);
     setServiceForm({ name: '', description: '', price: '', features: '' });
@@ -180,7 +199,7 @@ const AdminDashboard = () => {
     const newAmcStatus = !client.amc;
     try {
       await api.put(`/clients/${client._id}`, { amc: newAmcStatus });
-      setClients(clients.map(c => c._id === client._id ? { ...c, amc: newAmcStatus } : c));
+      setClients(clients.map(c => c._id === client._id ? { ...client, amc: newAmcStatus } : c));
     } catch (err) {
       console.error('Error updating AMC status:', err);
     }
@@ -255,7 +274,26 @@ const AdminDashboard = () => {
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Support Requests</h3>
               <div className="space-y-4">
-                <p className="text-gray-500">No support requests to display.</p>
+                {supportTicketsData.length > 0 ? (
+                  // Sort by date descending and take the last 5
+                  supportTicketsData.slice() // Create a shallow copy before sorting
+ .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)) // Sort by update date descending, fallback to creation date
+ .slice(0, 3) // Take the first 3 after sorting by update date (which are the most recently updated)
+                    .map(ticket => (
+                      <div key={ticket._id} className="border-b pb-4 last:border-b-0 last:pb-0">
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm font-medium text-gray-900">{ticket.subject}</p>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+                            {ticket.status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600">from {ticket.clientName}</p>
+                        <p className="text-xs text-gray-500 mt-1">{new Date(ticket.createdAt).toLocaleString()}</p>
+                      </div>
+                    ))
+                ) : (
+                  <p className="text-gray-500">No support requests to display.</p>
+                )}
               </div>
             </div>
           </div>

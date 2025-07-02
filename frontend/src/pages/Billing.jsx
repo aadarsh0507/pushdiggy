@@ -1,54 +1,119 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/api';
+import { useAuth } from '../context/AuthContext'; // Assuming you have an AuthContext
 
 const Billing = () => {
-  const [clients, setClients] = useState([]);
+  const [bills, setBills] = useState([]);
+  const [selectedBill, setSelectedBill] = useState(null); // State to hold the selected bill for viewing
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth(); // Get the logged-in user from context
 
   useEffect(() => {
-    const fetchClients = async () => {
+    const fetchBills = async () => {
       try {
-        const res = await api.get('/clients');
-        setClients(res.data);
+        setIsLoading(true);
+        // Assuming your backend has an endpoint like /api/clients/:clientId/bills
+        // and user.id contains the logged-in client's ID
+        const res = await api.get(`/clients/${user.id}/bills`);
+        setBills(res.data);
       } catch (error) {
-        console.error('Error fetching clients:', error);
+        console.error('Error fetching bills:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchClients();
-  }, []);
+    // Fetch bills only if the user is logged in and has an ID
+    if (user?.id) {
+      fetchBills();
+    }
+  }, [user]); // Re-run effect if user changes
+
+  const handleDownloadBill = (billId) => {
+    // Placeholder for future PDF download logic
+    alert(`Download bill ${billId}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <h2 className="text-3xl font-bold text-gray-900 mb-6">Client Billing</h2>
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Company</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Services</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Amount</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {clients.map(client => {
-              const total = (client.services || []).reduce((sum, svc) => sum + (parseFloat(svc.price || 0) || 0), 0);
-              return (
-                <tr key={client._id}>
-                  <td className="px-6 py-4 whitespace-nowrap">{client.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{client.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{client.company}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{client.services?.length || 0}</td>
-                  <td className="px-6 py-4 whitespace-nowrap font-semibold text-green-600">₹{total.toFixed(2)}</td>
+      <h2 className="text-3xl font-bold text-gray-900 mb-6">My Bills</h2>
+
+      {isLoading ? (
+        <div className="text-center">Loading bills...</div>
+      ) : bills.length === 0 ? (
+        <div className="text-center text-gray-600">No bills found for your account.</div>
+      ) : (
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Number</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {bills.map((bill) => (
+                <tr key={bill._id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{bill.invoiceNumber}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(bill.date).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{bill.subject}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">₹{bill.totalAmount?.toFixed(2) || '0.00'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      bill.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {bill.paymentStatus || 'unpaid'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
+                    <button
+                      onClick={() => setSelectedBill(bill)}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleDownloadBill(bill._id)}
+                      className="text-indigo-600 hover:text-indigo-900"
+                    >
+                      Download
+                    </button>
+                  </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Placeholder for Bill Detail Modal/View */}
+      {selectedBill && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Invoice Details - #{selectedBill.invoiceNumber}</h3>
+              {/* You would render the full bill details here based on selectedBill */}
+              <p className="text-gray-500 text-sm">Display detailed view of the bill here.</p>
+              <div className="items-center px-4 py-3">
+                <button
+                  onClick={() => setSelectedBill(null)}
+                  className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
 
 export default Billing;
+

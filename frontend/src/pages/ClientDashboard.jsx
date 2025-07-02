@@ -49,11 +49,13 @@ const ClientDashboard = () => {
   const handleSupportSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log('handleSubmitRequest: Entering try block');
       console.log('Attempting to create support request with form data:', supportForm);
       const newRequest = {
         clientId: user.id,
         clientName: user.name,
         subject: supportForm.subject,
+        // Ensure description is correctly included
         description: supportForm.description,
         priority: supportForm.priority,
         status: 'open',
@@ -63,14 +65,15 @@ const ClientDashboard = () => {
 
       console.log('Sending new support request data:', newRequest);
       const res = await api.post('/support-requests', newRequest);
+      console.log('handleSubmitRequest: API call successful, received response:', res);
       console.log('Support request created successfully:', res.data);
       setSupportRequests([...supportRequests, res.data]);
       setShowSupportModal(false);
       fetchClientData(); // Re-fetch data to show the correct initial status
       setSupportForm({ subject: '', description: '', priority: 'medium' });
     } catch (err) {
+      console.log('handleSubmitRequest: Entering catch block');
       console.error('Error creating support request:', err.response?.data || err.message);
-      alert('Failed to create support request. Please try again.'); // User feedback
     }
   };
 
@@ -166,10 +169,10 @@ const ClientDashboard = () => {
                 <FileText className="h-5 w-5 text-purple-600 mr-2" />
                 <span className="text-sm font-medium text-gray-700">Download Reports</span>
               </button>
-              <button className="flex items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+              {/* <button className="flex items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
                 <Calendar className="h-5 w-5 text-orange-600 mr-2" />
                 <span className="text-sm font-medium text-gray-700">Schedule Meeting</span>
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -186,7 +189,7 @@ const ClientDashboard = () => {
                 </button>
               </div>
               <div className="space-y-4">
-                {supportRequests.slice(0, 3).map((request) => (
+                {supportRequests.slice(-3).map((request) => (
                   <div key={request.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">

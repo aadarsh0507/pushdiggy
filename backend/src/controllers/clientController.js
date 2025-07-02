@@ -17,9 +17,9 @@ export const registerClient = async (req, res) => {
       email,
       password: hashedPassword,
       phone,
-      joinDate: new Date(), // <-- Add this line if you want to set explicitly
-      amc: amc || false, // Add default or provided AMC status
-      status: 'enquiry', // Set default status to enquiry
+      joinDate: new Date(),
+      amc: amc || false,
+      status: 'enquiry',
     });
     await client.save();
     res.status(201).json(client);
@@ -31,7 +31,6 @@ export const registerClient = async (req, res) => {
 export const loginClient = async (req, res) => {
   try {
     const { email, password } = req.body;
-    // Only find clients
     const client = await Client.findOne({ email, role: 'client' });
     if (!client) {
       return res.status(404).json({ message: "Client not found." });
@@ -62,8 +61,12 @@ export const loginClient = async (req, res) => {
 };
 
 export const getAllClients = async (req, res) => {
-  const clients = await Client.find();
-  res.json(clients);
+  try {
+    const clients = await Client.find();
+    res.json(clients);
+  } catch (error) {
+    res.status(500).json({ message: "Server error.", error: error.message });
+  }
 };
 
 export const getClientById = async (req, res) => {
@@ -82,50 +85,74 @@ export const getClientById = async (req, res) => {
 export const updateClient = async (req, res) => {
   try {
     const clientId = req.params.id;
-    const updateData = req.body; // Data to update the client with
+    const { name, email, phone, amc, company } = req.body;
 
     const client = await Client.findById(clientId);
-
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
     }
 
-    // Update client document with data from req.body
-    Object.assign(client, updateData);
+    // Update fields if they exist in the request
+    if (name) client.name = name;
+    if (email) client.email = email;
+    if (phone) client.phone = phone;
+    if (company) client.company = company;
+    
+    // Explicitly check for amc in request body (can be false)
+    if ('amc' in req.body) {
+      client.amc = Boolean(amc);
+      console.log(`Updated AMC status to: ${client.amc}`);
+    }
 
     await client.save();
 
-    res.status(200).json(client);
+    res.status(200).json({
+      message: 'Client updated successfully',
+      client: {
+        id: client._id,
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        company: client.company,
+        amc: client.amc,
+        status: client.status
+      }
+    });
   } catch (error) {
     console.error('Error updating client:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
 export const updateClientStatus = async (req, res) => {
   try {
     const clientId = req.params.id;
-    const { status, inactiveDate } = req.body; // Extract status and inactiveDate
+    const { status, inactiveDate } = req.body;
 
     const client = await Client.findById(clientId);
-
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
     }
 
     client.status = status;
     if (status === 'inactive' && inactiveDate) {
-      client.inactiveDate = new Date(inactiveDate); // Save the inactiveDate
+      client.inactiveDate = new Date(inactiveDate);
     } else if (status === 'active') {
-      client.inactiveDate = null; // Clear inactiveDate if status is active
+      client.inactiveDate = null;
     }
-
 
     await client.save();
 
-    res.status(200).json(client);
+    res.status(200).json({
+      message: 'Client status updated successfully',
+      client: {
+        id: client._id,
+        status: client.status,
+        inactiveDate: client.inactiveDate
+      }
+    });
   } catch (error) {
     console.error('Error updating client status:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
