@@ -79,6 +79,29 @@ export const getClientById = async (req, res) => {
   }
 };
 
+export const updateClient = async (req, res) => {
+  try {
+    const clientId = req.params.id;
+    const updateData = req.body; // Data to update the client with
+
+    const client = await Client.findById(clientId);
+
+    if (!client) {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+
+    // Update client document with data from req.body
+    Object.assign(client, updateData);
+
+    await client.save();
+
+    res.status(200).json(client);
+  } catch (error) {
+    console.error('Error updating client:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 export const updateClientStatus = async (req, res) => {
   try {
     const clientId = req.params.id;

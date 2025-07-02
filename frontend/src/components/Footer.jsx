@@ -59,7 +59,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Services */}
+          {/* Services
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Services</h3>
             <ul className="space-y-2 text-gray-300">
@@ -70,7 +70,7 @@ const Footer = () => {
               <li>Managed Services</li>
               <li>Web Development</li>
             </ul>
-          </div>
+          </div> */}
 
           {/* Contact Info */}
           <div className="space-y-4">
@@ -78,15 +78,15 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <MapPin className="h-5 w-5 text-blue-400" />
-                <span className="text-gray-300 text-sm">123 Tech Street, Silicon Valley, CA 94000</span>
+                <span className="text-gray-300 text-sm">Acharapakkam</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-blue-400" />
-                <span className="text-gray-300 text-sm">+1 (555) 123-4567</span>
+                <span className="text-gray-300 text-sm">+91 8608706864</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-blue-400" />
-                <span className="text-gray-300 text-sm">info@technova.com</span>
+                <span className="text-gray-300 text-sm">pushdiggy@gmail.com</span>
               </div>
             </div>
           </div>
@@ -94,7 +94,7 @@ const Footer = () => {
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
           <p className="text-gray-400 text-sm">
-            © 2024 PUSH DIGGY. All rights reserved.
+            © 2025 PUSH DIGGY. All rights reserved.
           </p>
         </div>
       </div>

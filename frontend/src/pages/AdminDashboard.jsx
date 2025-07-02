@@ -30,6 +30,7 @@ const AdminDashboard = () => {
     const fetchClients = async () => {
       try {
         const res = await api.get('/clients');
+        console.log('Fetched clients:', res.data); // Log fetched data
         setClients(res.data);
       } catch (err) {
         console.error('Error fetching clients:', err);
@@ -157,7 +158,7 @@ const AdminDashboard = () => {
       const updateData = { 
         status: newStatus,
         // Clear inactive date if status is being set to active
-        inactiveDate: newStatus === 'inactive' ? new Date() : null
+ inactiveDate: newStatus === 'inactive' ? new Date().toISOString() : null
       };
   
       await api.put(`/clients/${client._id}/status`, updateData);
@@ -172,7 +173,7 @@ const AdminDashboard = () => {
       ));
     } catch (err) {
       console.error('Error updating client status:', err);
-    }
+    } 
   };
 
   const handleToggleAMC = async (client) => {
@@ -333,8 +334,14 @@ const AdminDashboard = () => {
                   <tr 
                     key={client._id}
                     className="hover:bg-gray-50"
-                    onClick={() => handleClientRowClick(client)}
-                    style={{ cursor: 'pointer' }}
+                    onClick={(e) => {
+                      // Only trigger click handler if the click target is a TD element
+                      // that is not within the AMC or Inactive Date cells
+                      if (e.target.tagName === 'TD' && !e.target.closest('.no-click')) {
+                        handleClientRowClick(client);
+                      }
+                    }}
+                    style={{ cursor: client.status === 'inactive' ? 'default' : 'pointer' }} // Make inactive rows not clickable
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -347,45 +354,54 @@ const AdminDashboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.services?.length || 0} services</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                     <button
-  onClick={(e) => {
-    e.stopPropagation();
-    handleToggleStatus(client);
-  }}
-  className={`flex items-center focus:outline-none ${
-    client.status === 'active' ? 'text-green-500' : 'text-gray-400'
-  }`}
-  title={client.status === 'active' ? 'Deactivate client' : 'Activate client'}
->
-  {client.status === 'active' ? (
-    <ToggleRight className="h-5 w-5" />
-  ) : (
-    <ToggleLeft className="h-5 w-5" />
-  )}
-  <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
-    {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
-  </span>
-</button>
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleStatus(client);
+                      }}
+                      className={`flex items-center focus:outline-none ${
+                        client.status === 'active' ? 'text-green-500' : 'text-gray-400'
+                      }`}
+                      title={client.status === 'active' ? 'Deactivate client' : 'Activate client'}
+                    >
+                      {client.status === 'active' ? (
+                        <ToggleRight className="h-5 w-5" />
+                      ) : (
+                        <ToggleLeft className="h-5 w-5" />
+                      )}
+                      <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
+                        {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
+                      </span>
+                    </button>
                      
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : ''}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 no-click">
                       <input
                         type="checkbox"
                         checked={client.amc || false}
                         onChange={(e) => {
                           e.stopPropagation();
                           handleToggleAMC(client);
+                          
                         }}
                         className="form-checkbox h-5 w-5 text-blue-600"
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-  {client.inactiveDate ? new Date(client.inactiveDate).toLocaleDateString() : '-'}
-</td>
+                    {/* Removed click handler/link for inactive date */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 no-click"
+                        style={{ cursor: 'default' }} // Ensure cursor doesn't indicate clickability
+                         onClick={(e) => e.stopPropagation()} // Prevent row click handler
+                    >
+                      {client.inactiveDate 
+                        ? new Date(client.inactiveDate).toLocaleDateString() 
+                        : '-'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-2 no-click"
+                           onClick={(e) => e.stopPropagation()} // Prevent row click handler
+                           >
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
