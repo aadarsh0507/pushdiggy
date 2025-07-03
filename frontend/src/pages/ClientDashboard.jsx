@@ -21,31 +21,40 @@ const ClientDashboard = () => {
     const fetchClientData = async () => {
       try {
         setIsLoading(true);
-        const [clientRes, supportRes] = await Promise.all([
-          api.get(`/clients/${user.id}`).catch(err => {
-            console.error(`Error fetching client data for ID ${user.id}:`, err);
-            return { data: null }; // Return a default value or re-throw if critical
-          }),
-          api.get(`/support-requests?clientId=${user.id}`).catch(err => {
-            console.error(`Error fetching support requests for client ID ${user.id}:`, err);
-            return { data: [] }; // Return an empty array or re-throw if critical
-          })
-        ]);
+        const clientRes = await api.get(`/clients/${user.id}`);
         setClientData(clientRes.data);
-        setSupportRequests(supportRes.data);
-      } catch (err) {
+
+        const supportRes = await api.get(`/support-requests/client/${user.id}`);
+        // Filter support requests to ensure only the client's tickets are shown
+    console.log("Support requests data received from backend:", supportRes.data); // Add this line
+
+    setSupportRequests(supportRes.data);
+
+    console.log("Support requests state after setting:", supportRes.data); // Add this line
+
+  } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
         setIsLoading(false);
       }
-    };
+};
+
 
     if (user?.id) {
       console.log("Fetching data for user:", user.id);
       fetchClientData();
     }
-  }, [user]);
 
+    // Add event listener for custom event
+    const handleTicketUpdated = () => {
+      fetchClientData();
+    };
+    window.addEventListener('ticketUpdatedEvent', handleTicketUpdated);
+
+    return () => {
+      window.removeEventListener('ticketUpdatedEvent', handleTicketUpdated);
+    };
+  }, [user]); // Added fetchClientData to the dependency array
   const handleSupportSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -268,6 +277,7 @@ const ClientDashboard = () => {
   };
 
   const renderSupport = () => {
+    console.log("Rendering support tickets. supportRequests state:", supportRequests); // Added console log
     if (isLoading) return <div className="text-center py-12">Loading...</div>;
 
     return (
@@ -297,6 +307,7 @@ const ClientDashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {supportRequests.map((request) => (
+                  console.log("Rendering ticket with client ID:", request.clientId, "and ticket ID:", request._id),
                   <tr key={request.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -315,8 +326,8 @@ const ClientDashboard = () => {
                         {request.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{request.date}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{request.assignedTo}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(request.date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{request.assignedTo?.name || 'Not assigned'}</td>
                   </tr>
                 ))}
               </tbody>

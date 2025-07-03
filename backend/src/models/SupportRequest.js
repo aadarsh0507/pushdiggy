@@ -37,8 +37,8 @@ const supportRequestSchema = new mongoose.Schema({
     default: Date.now,
   },
   assignedTo: {
-    type: String,
-    default: 'Support Team',
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin',
   },
   resolutionDetails: {
     type: String,
@@ -48,6 +48,10 @@ const supportRequestSchema = new mongoose.Schema({
   },
   resolvedDate: {
     type: Date,
+  },
+  readyForBilling: {
+    type: Boolean,
+    default: false,
   },
 }, { timestamps: true });
 

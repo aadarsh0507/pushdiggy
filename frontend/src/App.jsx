@@ -12,6 +12,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import ClientDashboard from './pages/ClientDashboard';
 import ClientRegister from './pages/ClientRegister';
 import AdminRegister from './pages/AdminRegister';
+import AdminBilling from './components/AdminBilling';
 
 
 function App() {
@@ -32,7 +33,10 @@ function App() {
               path="/admin-dashboard"
               element={
                 <ProtectedRoute requiredRole="admin">
-                  <Layout><AdminDashboard /></Layout>
+                  {/* Render AdminDashboard component */}
+                  <Layout>
+                    <AdminDashboard />
+                  </Layout>
                 </ProtectedRoute>
               } 
             />

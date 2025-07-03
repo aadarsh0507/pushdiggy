@@ -82,7 +82,7 @@ export const getClientById = async (req, res) => {
   }
 };
 
-export const updateClient = async (req, res) => {
+export const updateClientGeneral = async (req, res) => {
   try {
     const clientId = req.params.id;
     const { name, email, phone, amc, company } = req.body;
@@ -101,7 +101,6 @@ export const updateClient = async (req, res) => {
     // Explicitly check for amc in request body (can be false)
     if ('amc' in req.body) {
       client.amc = Boolean(amc);
-      console.log(`Updated AMC status to: ${client.amc}`);
     }
 
     await client.save();
@@ -115,7 +114,6 @@ export const updateClient = async (req, res) => {
         phone: client.phone,
         company: client.company,
         amc: client.amc,
-        status: client.status
       }
     });
   } catch (error) {
@@ -134,8 +132,10 @@ export const updateClientStatus = async (req, res) => {
       return res.status(404).json({ message: 'Client not found' });
     }
 
-    client.status = status;
-    if (status === 'inactive' && inactiveDate) {
+    if (status !== undefined) {
+      client.status = status;
+    }
+    if (inactiveDate !== undefined) {
       client.inactiveDate = new Date(inactiveDate);
     } else if (status === 'active') {
       client.inactiveDate = null;

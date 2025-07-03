@@ -83,6 +83,31 @@ const adminController = {
     } catch (error) {
       res.status(500).json({ message: "Server error.", error: error.message });
     }
+  },
+
+  async getAllAdmins(req, res) {
+    try {
+      const admins = await Admin.find({});
+      res.status(200).json(admins);
+    } catch (error) {
+      res.status(500).json({ message: "Server error.", error: error.message });
+    }
+  },
+
+  async getAdminById(req, res) {
+    try {
+      const admin = await Admin.findById(req.params.id);
+      if (!admin) {
+        return res.status(404).json({ message: 'Admin not found' });
+      }
+      res.status(200).json(admin);
+    } catch (error) {
+      // Handle cases like invalid ID format
+      if (error.kind === 'ObjectId') {
+        return res.status(404).json({ message: 'Admin not found' });
+      }
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
   }
 };
 

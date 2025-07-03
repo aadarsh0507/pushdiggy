@@ -372,14 +372,6 @@ const AdminDashboard = () => {
                   <tr 
                     key={client._id}
                     className="hover:bg-gray-50"
-                    onClick={(e) => {
-                      // Only trigger click handler if the click target is a TD element
-                      // that is not within the AMC or Inactive Date cells
-                      if (e.target.tagName === 'TD' && !e.target.closest('.no-click')) {
-                        handleClientRowClick(client);
-                      }
-                    }}
-                    style={{ cursor: client.status === 'inactive' ? 'default' : 'pointer' }} // Make inactive rows not clickable
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>

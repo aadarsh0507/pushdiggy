@@ -12,7 +12,9 @@ import adminRoutes from './src/routes/adminRoutes.js';
 import clientRoutes from './src/routes/clientRoutes.js';
 import otpRoutes from './src/routes/otpRoutes.js';
 import serviceRoutes from './src/routes/serviceRoutes.js';
+import adminController from './src/controllers/adminController.js';
 import supportRoutes from './src/routes/supportRoutes.js'; // Import the new support routes
+import billingRoutes from './src/routes/billingRoutes.js'; // Import billing routes
 
 const app = express();
 
@@ -33,11 +35,17 @@ mongoose.connect(process.env.DATABASE_URL, {
 .then(() => console.log('Database connected'))
 .catch(err => console.error('Database connection error:', err));
 
+// Log incoming requests to debug routing
+app.use((req, res, next) => {
+  console.log('Request Path:', req.path, 'Original URL:', req.originalUrl);
+  next();
+});
 app.use('/api/admin', adminRoutes);
 app.use('/api/clients', clientRoutes); // Keep only this one for clients
 app.use('/api/auth', otpRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/support-requests', supportRoutes); // Use the new support routes
+app.use('/api/billing', billingRoutes); // Use billing routes
 
 const PORT = process.env.PORT || 5000;
 
