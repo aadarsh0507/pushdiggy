@@ -23,7 +23,7 @@ export async function sendOtp(req, res) {
 }
 
 export async function verifyOtpAndRegister(req, res) {
-  const { email, otp, password, name, company, phone, role } = req.body;
+  const { email, otp, password, name, company, phone, role, address } = req.body;
   const stored = otpStore.get(email);
 
   if (!stored || stored.otp !== otp) {
@@ -43,6 +43,7 @@ export async function verifyOtpAndRegister(req, res) {
       name,
       company,
       phone,
+ address,
       role: role || 'client'
     });
 

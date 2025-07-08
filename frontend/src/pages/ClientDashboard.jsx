@@ -21,14 +21,23 @@ const ClientDashboard = () => {
     const fetchClientData = async () => {
       try {
         setIsLoading(true);
+        console.log(`Fetching client data for user ID: ${user.id}`);
         const clientRes = await api.get(`/clients/${user.id}`);
         setClientData(clientRes.data);
+        console.log('Client data fetched successfully:', clientRes.data);
 
+        console.log(`Fetching support requests for client ID: ${user.id}`);
         const supportRes = await api.get(`/support-requests/client/${user.id}`);
         // Filter support requests to ensure only the client's tickets are shown
     console.log("Support requests data received from backend:", supportRes.data); // Add this line
-
-    setSupportRequests(supportRes.data);
+        // Map over the data to ensure assignedTo is correctly structured
+    const formattedSupportRequests = supportRes.data.map(request => ({
+      ...request,
+      // Ensure assignedTo is an object with a name property or null
+      assignedTo: request.assignedTo ? { name: request.assignedTo.name } : null
+    }));
+        setSupportRequests(formattedSupportRequests);
+    console.log('Support requests state updated with:', supportRes.data);
 
     console.log("Support requests state after setting:", supportRes.data); // Add this line
 
@@ -47,6 +56,7 @@ const ClientDashboard = () => {
 
     // Add event listener for custom event
     const handleTicketUpdated = () => {
+      console.log("ticketUpdatedEvent received in ClientDashboard.");
       fetchClientData();
     };
     window.addEventListener('ticketUpdatedEvent', handleTicketUpdated);
@@ -54,7 +64,7 @@ const ClientDashboard = () => {
     return () => {
       window.removeEventListener('ticketUpdatedEvent', handleTicketUpdated);
     };
-  }, [user]); // Added fetchClientData to the dependency array
+  }, [user]); 
   const handleSupportSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -63,6 +73,7 @@ const ClientDashboard = () => {
       const newRequest = {
         clientId: user.id,
         clientName: user.name,
+ company: clientData.company, // Add company from clientData
         subject: supportForm.subject,
         // Ensure description is correctly included
         description: supportForm.description,
@@ -71,6 +82,7 @@ const ClientDashboard = () => {
         date: new Date().toISOString().split('T')[0],
         assignedTo: 'Support Team'
       };
+      console.log('New support request object:', newRequest);
 
       console.log('Sending new support request data:', newRequest);
       const res = await api.post('/support-requests', newRequest);
@@ -307,6 +319,7 @@ const ClientDashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {supportRequests.map((request) => (
+ console.log("Assigned To for ticket:", request.assignedTo),
                   console.log("Rendering ticket with client ID:", request.clientId, "and ticket ID:", request._id),
                   <tr key={request.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">

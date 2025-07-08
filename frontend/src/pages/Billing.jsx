@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/api';
 import { useAuth } from '../context/AuthContext'; // Assuming you have an AuthContext
+import InvoiceTemplate from '../components/InvoiceTemplate'; // Import InvoiceTemplate
 
 const Billing = () => {
   const [bills, setBills] = useState([]);
@@ -95,10 +96,8 @@ const Billing = () => {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
             <div className="mt-3 text-center">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Invoice Details - #{selectedBill.invoiceNumber}</h3>
-              {/* You would render the full bill details here based on selectedBill */}
-              <p className="text-gray-500 text-sm">Display detailed view of the bill here.</p>
-              <div className="items-center px-4 py-3">
+              <InvoiceTemplate billData={selectedBill} /> {/* Render InvoiceTemplate with selectedBill data */}
+              <div className="items-center px-4 py-3 mt-4"> {/* Added margin-top for spacing */}
                 <button
                   onClick={() => setSelectedBill(null)}
                   className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"

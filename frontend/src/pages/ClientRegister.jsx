@@ -11,8 +11,10 @@ const ClientRegister = () => {
     company: '',
     phone: '',
     email: '',
+    address: '',
     otp: '',
-    password: '',
+ 
+ password: '',
     confirmPassword: ''
   });
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -22,11 +24,11 @@ const ClientRegister = () => {
 
   const sendOtp = async () => {
     try {
-      const { name, company, phone, email } = formData;
-      if (!name || !company || !phone || !email) {
+      const { name, company, phone, email, address } = formData;
+      if (!name || !company || !phone || !email || !address) {
         return setMessage({ type: 'error', text: 'Please fill in all fields.' });
       }
-      await api.post('/auth/send-otp', { email });
+      await api.post('/auth/send-otp', { email, name, company, phone, address });
       setMessage({ type: 'success', text: 'OTP sent to email.' });
       setStep(2);
     } catch (err) {
@@ -36,7 +38,7 @@ const ClientRegister = () => {
 
   const verifyAndRegister = async e => {
     e.preventDefault();
-    const { otp, password, confirmPassword, email, name, company, phone } = formData;
+    const { otp, password, confirmPassword, email, name, company, phone, address } = formData;
 
     if (!otp || !password || !confirmPassword) {
       return setMessage({ type: 'error', text: 'All fields are required.' });
@@ -54,6 +56,7 @@ const ClientRegister = () => {
         name,
         company,
         phone,
+ address,
         role: 'client' // optional if backend already defaults it
       });
       setMessage({ type: 'success', text: 'Registration successful! Redirecting...' });
@@ -89,6 +92,7 @@ const ClientRegister = () => {
             <Input icon={Building2} name="company" placeholder="Company Name" value={formData.company} onChange={handleChange} />
             <Input icon={Phone} name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} />
             <Input icon={Mail} type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} />
+            <Input icon={Building2} name="address" placeholder="Address" value={formData.address} onChange={handleChange} />
             <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
               Send OTP
             </button>

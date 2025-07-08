@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 const billSchema = new mongoose.Schema({
   invoiceNumber: {
     type: String,
-    required: true,
     unique: true,
     trim: true,
   },
@@ -32,7 +31,19 @@ const billSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  gst: {
+  sgst: {
+    type: Number,
+    required: true,
+  },
+  cgst: {
+    type: Number,
+    required: true,
+  },
+  sgstPercent: {
+    type: Number,
+    required: true,
+  },
+  cgstPercent: {
     type: Number,
     required: true,
   },
@@ -68,7 +79,7 @@ const billSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['draft', 'sent', 'paid'],
-    default: 'draft',
+    default: 'sent',
   },
 }, { timestamps: true });
 

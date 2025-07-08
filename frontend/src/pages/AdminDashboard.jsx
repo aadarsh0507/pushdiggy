@@ -4,6 +4,7 @@ import { Users, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, Che
 // Import the new components (will be created next)
 import AdminSupportTickets from '../components/AdminSupportTickets';
 import AdminBilling from '../components/AdminBilling';
+import AdminBills from '../components/AdminBills'; // Import the new AdminBills component
 import api from '../api/api';
 
 const AdminDashboard = () => {
@@ -17,6 +18,7 @@ const AdminDashboard = () => {
   const [filterStatus, setFilterStatus] = useState('All');
   const [editingService, setEditingService] = useState(null);
   const [supportTicketsData, setSupportTicketsData] = useState([]);
+  const [bills, setBills] = useState([]); // State to hold bill data
 
   // Service form state
   const [serviceForm, setServiceForm] = useState({
@@ -64,6 +66,19 @@ const AdminDashboard = () => {
       }
     };
     fetchSupportTickets();
+  }, []); // Fetch when component mounts
+
+  // Fetch bills from backend
+  useEffect(() => {
+    const fetchBills = async () => {
+      try {
+        const res = await api.get('/billing/bills'); // Corrected endpoint to match backend routing
+        setBills(res.data);
+      } catch (err) {
+        console.error('Error fetching bills:', err);
+      }
+    };
+    fetchBills();
   }, []); // Fetch when component mounts
 
   const stats = {
@@ -688,6 +703,13 @@ const AdminDashboard = () => {
     </div>
   );
 
+  // Render the Bills section (using the new component)
+  const renderBills = () => {
+    // Pass the fetched bills data to the AdminBills component
+    return <AdminBills bills={bills} clients={clients} />;
+  };
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -705,6 +727,7 @@ const AdminDashboard = () => {
               { key: 'messages', label: 'Messages', icon: MessageSquare },
               { key: 'support', label: 'Support Tickets', icon: MessageSquare }, // Reusing MessageSquare for now
               { key: 'billing', label: 'Billing', icon: CreditCard },
+              { key: 'bills', label: 'Bills', icon: CreditCard }, // New tab for Bills
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -731,7 +754,8 @@ const AdminDashboard = () => {
           {activeTab === 'services' && renderServices()}
           {activeTab === 'messages' && renderMessages()}
           {activeTab === 'support' && <AdminSupportTickets />}
-          {activeTab === 'billing' && <AdminBilling />}
+          {activeTab === 'billing' && <AdminBilling clients={clients} />}
+          {activeTab === 'bills' && renderBills()} {/* Render the Bills section */}
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ const AdminSupportTickets = () => {
   const [tickets, setTickets] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [assignedTo, setAssignedTo] = useState({});
+  const [clients, setClients] = useState([]);
   const navigate = useNavigate();
 
   const [editingTicketId, setEditingTicketId] = useState(null);
@@ -14,6 +15,7 @@ const AdminSupportTickets = () => {
   const [viewingTicketId, setViewingTicketId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterDateRange, setFilterDateRange] = useState({ startDate: '', endDate: '' });
+  const [filterClient, setFilterClient] = useState('All');
 
   useEffect(() => {
     // Fetch tickets
@@ -36,8 +38,19 @@ const AdminSupportTickets = () => {
       }
     };
 
+    // Fetch clients
+    const fetchClients = async () => {
+      try {
+        const res = await api.get('/clients');
+        setClients(res.data);
+      } catch (err) {
+        console.error('Error fetching clients:', err);
+      }
+    };
+
     fetchTickets();
     fetchAdmins();
+    fetchClients();
   }, []);
 
   useEffect(() => {
@@ -48,9 +61,20 @@ const AdminSupportTickets = () => {
     setAssignedTo(initialAssignedTo);
   }, [tickets]);
 
+  // Effect to update filtered tickets when filters change
+  const filteredTickets = tickets.filter(ticket => {
+    // Apply status, date range, and client filters
+    const statusMatch = filterStatus === 'All' || ticket.status === filterStatus;
+    const clientMatch = filterClient === 'All' || (ticket.clientId && ticket.clientId._id === filterClient);
+    const dateMatch = (!filterDateRange.startDate || new Date(ticket.date) >= new Date(filterDateRange.startDate)) && (!filterDateRange.endDate || new Date(ticket.date) <= new Date(filterDateRange.endDate));
+    return statusMatch && clientMatch && dateMatch;
+  });
+
   const handleUpdateTicket = async (ticketId, updatedFields) => {
     try {
       const res = await api.put(`/support-requests/${ticketId}`, updatedFields);
+      console.log("Backend response data structure:", res.data);
+      console.log("Value of res.data.assignedTo after update:", res.data.assignedTo);
       console.log("Updated ticket data from backend:", res.data); // Log updated data
       window.dispatchEvent(new Event('ticketUpdatedEvent')); // Dispatch custom event
       setTickets(tickets.map(ticket => (ticket._id === ticketId ? res.data : ticket)));
@@ -106,7 +130,7 @@ const AdminSupportTickets = () => {
     }
   };
 
-  return (
+ return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Support Tickets</h1>
 
@@ -148,10 +172,13 @@ const AdminSupportTickets = () => {
         </div>
       )}
 
-      <div className="mb-6 flex space-x-4 items-center">
-        <div>
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-center">
+        {/* Filter by Status */}
+        <div className="flex flex-col">
           <label htmlFor="statusFilter" className="block text-sm font-medium text-gray-700">Filter by Status:</label>
-          <select
+          <div className="mt-1">
+
+            <select
             id="statusFilter"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -161,18 +188,42 @@ const AdminSupportTickets = () => {
             <option value="open">Open</option>
             <option value="in-progress">In Progress</option>
             <option value="resolved">Resolved</option>
+
+          </select>
+</div>
+        </div>
+
+        {/* Filter by Date Range */}
+        <div className="flex flex-col">
+          <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">Start Date:</label>
+          <div className="mt-1">
+            <input type="date" id="startDate" value={filterDateRange.startDate} onChange={(e) => setFilterDateRange({ ...filterDateRange, startDate: e.target.value })} className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
+          </div>
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">End Date:</label>
+          <div className="mt-1">
+            <input type="date" id="endDate" value={filterDateRange.endDate} onChange={(e) => setFilterDateRange({ ...filterDateRange, endDate: e.target.value })} className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
+          </div>
+        </div>
+
+        {/* Filter by Client */}
+        <div className="flex flex-col">
+          <label htmlFor="clientFilter" className="block text-sm font-medium text-gray-700">Filter by Client:</label>
+          <div className="mt-1">
+
+
+          <select
+            id="clientFilter"
+            value={filterClient}
+            onChange={(e) => setFilterClient(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          >
+            <option value="All">All Clients</option>
+            {clients.map(client => (<option key={client._id} value={client._id}>{client.name}</option>))}
           </select>
         </div>
-        <div>
-
-          <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">Start Date:</label>
-          <input type="date" id="startDate" value={filterDateRange.startDate} onChange={(e) => setFilterDateRange({ ...filterDateRange, startDate: e.target.value })} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
-        </div>
-        <div>
-          <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">End Date:</label>
-          <input type="date" id="endDate" value={filterDateRange.endDate} onChange={(e) => setFilterDateRange({ ...filterDateRange, endDate: e.target.value })} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
-        </div>
-      </div>
+      </div></div>
 
 
 
@@ -195,24 +246,11 @@ const AdminSupportTickets = () => {
                  </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {tickets
-                .filter(ticket => {
-                  // Status Filter
-                  if (filterStatus === 'All') {
-                    if (ticket.status === 'resolved') return false; // Exclude resolved for 'All'
-                  } else if (ticket.status !== filterStatus) {
-                    return false; // Filter by specific status
-                  }
-                  // Date Range Filter (based on creation date)
-                  const ticketDate = new Date(ticket.date);
-                  if (filterDateRange.startDate && ticketDate < new Date(filterDateRange.startDate)) return false;
-                  if (filterDateRange.endDate && ticketDate > new Date(filterDateRange.endDate)) return false;
-                  return true;
-                }).map(ticket => (
+              {filteredTickets.map(ticket => (
                 <React.Fragment key={ticket._id}>
                   <tr className="hover:bg-gray-50">
                     <td className="px-3 py-4 text-sm font-medium text-gray-900">{ticket.subject}</td>
-                    <td className="px-3 py-4 text-sm text-gray-900">{ticket.clientName}</td>
+                    <td className="px-3 py-4 text-sm text-gray-900">{clients.find(client => client._id === ticket.clientId)?.name || 'Unknown Client'}</td>
                     <td className="px-3 py-4 text-sm text-gray-900">{ticket.clientId?.company}</td>
                     <td className="px-3 py-4 text-sm text-gray-500 max-w-xs">
                       <div className="max-h-12 overflow-hidden text-ellipsis">{ticket.description}</div> {/* Apply max-height and ellipsis */}
@@ -249,14 +287,8 @@ const AdminSupportTickets = () => {
  value={ticket.assignedTo?._id || ''}
                         onChange={async (e) => {
                           const newAssignedToId = e.target.value;
-                          // Update local state immediately for responsiveness
-                          setTickets(prevTickets => prevTickets.map(prevTicket =>
-                            prevTicket._id === ticket._id
-                              ? { ...prevTicket, assignedTo: newAssignedToId ? { _id: newAssignedToId, name: admins.find(admin => admin._id === newAssignedToId)?.name || 'Unknown Admin' } : null }
-                              : prevTicket
-                          ));
-                          await handleUpdateTicket(ticket._id, { assignedTo: newAssignedTo });
- }}
+                          await handleUpdateTicket(ticket._id, { assignedTo: newAssignedToId === '' ? null : newAssignedToId });
+                        }}
                         className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       >
  <option value="">Unassigned</option>
@@ -322,7 +354,7 @@ const AdminSupportTickets = () => {
             </tbody>
           </table>
         </div>
-        {tickets.length === 0 && (
+        {filteredTickets.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500">No support tickets found.</p>
           </div>

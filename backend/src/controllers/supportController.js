@@ -73,7 +73,14 @@ export const updateSupportRequestStatus = async (req, res) => {
     if (status !== undefined) updateFields.status = status;
     if (resolutionDetails !== undefined) updateFields.resolutionDetails = resolutionDetails;
     if (resolvedBy !== undefined) updateFields.resolvedBy = resolvedBy;
-    if (assignedTo !== undefined) updateFields.assignedTo = assignedTo;
+    // Handle assignedTo: convert to ObjectId if it's a valid ID, otherwise set to null
+    if (assignedTo !== undefined) {
+      if (assignedTo && mongoose.Types.ObjectId.isValid(assignedTo)) {
+ updateFields.assignedTo = new mongoose.Types.ObjectId(assignedTo);
+      } else {
+ updateFields.assignedTo = null; // Set to null if assignedTo is empty, null, or not a valid ObjectId
+      }
+    }
     const existingRequest = await SupportRequest.findById(id);
     if (!existingRequest) {
  return res.status(404).json({ message: 'Support request not found' });
