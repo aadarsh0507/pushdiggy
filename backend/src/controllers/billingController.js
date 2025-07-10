@@ -2,9 +2,10 @@ import Bill from '../models/Bill.js';
 import Counter from '../models/Counter.js';
 import SupportRequest from '../models/SupportRequest.js';
 
+import Client from '../models/client.js'; // Import the Client model
 export const createBill = async (req, res) => {
   try {
-    const { client, subject, items, subtotal, sgst, cgst, grandTotal, date, bankDetails, ticketIds, sgstPercent, cgstPercent } = req.body;
+    const { client, subject, items, subtotal, sgst, cgst, grandTotal, date, bankDetails, ticketIds, sgstPercent, cgstPercent, billTo } = req.body;
     console.log('Received bill data in controller:', req.body);
 
     const currentYear = new Date().getFullYear();
@@ -19,11 +20,20 @@ export const createBill = async (req, res) => {
     const paddedSequenceNumber = counter.sequenceNumber.toString().padStart(3, '0');
     const invoiceNumber = `${currentYear}${paddedSequenceNumber}`;
 
+    // Fetch client details to get the name
+    const clientDetails = await Client.findById(client);
+
+    if (!clientDetails) {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+
+    // Construct the billTo object with client name
+    const billToObject = {
+      name: clientDetails.name,
+      address: billTo.address,
+      gstin: billTo.gstin,
+    };
     const newBill = new Bill({
-      invoiceNumber,
-      client,
-      subject,
-      items,
       subtotal,
       sgst,
       cgst,
@@ -31,6 +41,11 @@ export const createBill = async (req, res) => {
       cgstPercent,
       grandTotal,
       date,
+      invoiceNumber,
+      client, // Store client ID as a reference
+      subject,
+      items,
+      billTo: billToObject, // Assign the constructed billTo object
       bankDetails,
     });
 
@@ -96,6 +111,16 @@ export const updateBill = async (req, res) => {
     if (error.kind === 'ObjectId') {
       return res.status(400).json({ message: 'Invalid Bill ID format' });
     }
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const getBillsByClientId = async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const bills = await Bill.find({ client: clientId }).populate('client', 'name address gstin');
+    res.status(200).json(bills);
+  } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

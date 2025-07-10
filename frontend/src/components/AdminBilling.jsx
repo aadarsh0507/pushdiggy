@@ -270,6 +270,33 @@ const AdminBilling = () => {
                 <button type="button" onClick={handleAddItem} className="text-blue-600 text-sm mt-2"><Plus size={16} className="inline" /> Add Item</button>
               </div>
 
+              {/* Bank Details Section */}
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-2">Bank Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Account Name</label>
+                    <input type="text" value={billForm.bankDetails.accountName} onChange={(e) => handleNestedFormChange('bankDetails', 'accountName', e.target.value)} placeholder="Account Name" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Account Number</label>
+                    <input type="text" value={billForm.bankDetails.accountNumber} onChange={(e) => handleNestedFormChange('bankDetails', 'accountNumber', e.target.value)} placeholder="Account Number" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">IFSC Code</label>
+                    <input type="text" value={billForm.bankDetails.ifscCode} onChange={(e) => handleNestedFormChange('bankDetails', 'ifscCode', e.target.value)} placeholder="IFSC Code" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Bank Name</label>
+                    <input type="text" value={billForm.bankDetails.bankName} onChange={(e) => handleNestedFormChange('bankDetails', 'bankName', e.target.value)} placeholder="Bank Name" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Branch</label>
+                    <input type="text" value={billForm.bankDetails.branch} onChange={(e) => handleNestedFormChange('bankDetails', 'branch', e.target.value)} placeholder="Branch" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4 border-t pt-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">SGST (%)</label>

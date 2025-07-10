@@ -15,6 +15,7 @@ export const registerClient = async (req, res) => {
     const client = new Client({
       name,
       email,
+      address,
       password: hashedPassword,
       phone,
       joinDate: new Date(),

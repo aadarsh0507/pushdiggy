@@ -45,9 +45,9 @@ const InvoiceTemplate = ({ billData }) => {
 
       <div className="mt-8 border-b pb-6 border-gray-200">
         <p className="text-base font-semibold text-gray-800">To</p>
-        <p className="text-sm text-gray-700 mt-2">{billData.client?.name}</p>
-        <p className="text-sm text-gray-700 mt-1">{billData.client?.address}</p>
-        <p className="text-sm text-gray-700 mt-1">GSTIN: {billData.client?.gstin}</p>
+        <p className="text-sm text-gray-700 mt-2">{billData.billTo?.name}</p>
+        <p className="text-sm text-gray-700 mt-1">{billData.billTo?.address}</p>
+        <p className="text-sm text-gray-700 mt-1">GSTIN: {billData.billTo?.gstin}</p>
       </div>
 
       <div className="mt-8">

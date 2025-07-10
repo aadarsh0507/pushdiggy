@@ -250,10 +250,10 @@ const AdminSupportTickets = () => {
                 <React.Fragment key={ticket._id}>
                   <tr className="hover:bg-gray-50">
                     <td className="px-3 py-4 text-sm font-medium text-gray-900">{ticket.subject}</td>
-                    <td className="px-3 py-4 text-sm text-gray-900">{clients.find(client => client._id === ticket.clientId)?.name || 'Unknown Client'}</td>
+                    <td className="px-3 py-4 text-sm text-gray-900">{ticket.clientId?.name || 'N/A'}</td>
                     <td className="px-3 py-4 text-sm text-gray-900">{ticket.clientId?.company}</td>
                     <td className="px-3 py-4 text-sm text-gray-500 max-w-xs">
-                      <div className="max-h-12 overflow-hidden text-ellipsis">{ticket.description}</div> {/* Apply max-height and ellipsis */}
+                      <div className="whitespace-pre-wrap">{ticket.description}</div>
                     </td>
                     <td className="px-3 py-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit ${getStatusColor(ticket.priority)}`}>

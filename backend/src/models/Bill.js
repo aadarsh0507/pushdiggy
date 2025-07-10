@@ -11,6 +11,15 @@ const billSchema = new mongoose.Schema({
     ref: 'Client',
     required: true,
   },
+
+  billTo: {
+    name: {
+      type: String,
+      required: true,
+    },
+    address: { type: String }, // Address is not strictly required based on the frontend form, but can be added
+    gstin: { type: String },
+  },
   subject: {
     type: String,
     required: true,

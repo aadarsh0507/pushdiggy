@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, MessageSquare, CreditCard, FileText, Plus, Calendar, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Settings, MessageSquare, CreditCard, FileText, Plus, Calendar, CheckCircle, Clock, AlertTriangle, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
-
+import InvoiceTemplate from '../components/InvoiceTemplate'; // Import the InvoiceTemplate component
+import './../styles/print.css'; // Import the print styles
+ 
 const ClientDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [supportRequests, setSupportRequests] = useState([]);
+  const [clientBills, setClientBills] = useState([]); // New state for client bills
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [supportForm, setSupportForm] = useState({
     subject: '',
@@ -15,10 +18,12 @@ const ClientDashboard = () => {
   const [clientData, setClientData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false); // New state for invoice modal
+  const [selectedBill, setSelectedBill] = useState(null); // New state for selected bill
 
-  // Fetch client data and support requests
+  // Fetch client data, support requests, and bills
   useEffect(() => {
-    const fetchClientData = async () => {
+    const fetchClientDataAndBills = async () => {
       try {
         setIsLoading(true);
         console.log(`Fetching client data for user ID: ${user.id}`);
@@ -28,36 +33,33 @@ const ClientDashboard = () => {
 
         console.log(`Fetching support requests for client ID: ${user.id}`);
         const supportRes = await api.get(`/support-requests/client/${user.id}`);
-        // Filter support requests to ensure only the client's tickets are shown
-    console.log("Support requests data received from backend:", supportRes.data); // Add this line
-        // Map over the data to ensure assignedTo is correctly structured
-    const formattedSupportRequests = supportRes.data.map(request => ({
-      ...request,
-      // Ensure assignedTo is an object with a name property or null
-      assignedTo: request.assignedTo ? { name: request.assignedTo.name } : null
-    }));
+        const formattedSupportRequests = supportRes.data.map(request => ({
+          ...request,
+          assignedTo: request.assignedTo ? { name: request.assignedTo.name } : null
+        }));
         setSupportRequests(formattedSupportRequests);
-    console.log('Support requests state updated with:', supportRes.data);
+        console.log('Support requests state updated with:', supportRes.data);
 
-    console.log("Support requests state after setting:", supportRes.data); // Add this line
+        console.log(`Fetching bills for client ID: ${user.id}`);
+        const billsRes = await api.get(`/billing/bills/client/${user.id}`);
+        setClientBills(billsRes.data);
+        console.log('Client bills fetched successfully:', billsRes.data);
 
-  } catch (err) {
+      } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
         setIsLoading(false);
       }
-};
-
+    };
 
     if (user?.id) {
       console.log("Fetching data for user:", user.id);
-      fetchClientData();
+      fetchClientDataAndBills();
     }
 
-    // Add event listener for custom event
     const handleTicketUpdated = () => {
       console.log("ticketUpdatedEvent received in ClientDashboard.");
-      fetchClientData();
+      fetchClientDataAndBills();
     };
     window.addEventListener('ticketUpdatedEvent', handleTicketUpdated);
 
@@ -65,6 +67,7 @@ const ClientDashboard = () => {
       window.removeEventListener('ticketUpdatedEvent', handleTicketUpdated);
     };
   }, [user]); 
+
   const handleSupportSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -73,9 +76,8 @@ const ClientDashboard = () => {
       const newRequest = {
         clientId: user.id,
         clientName: user.name,
- company: clientData.company, // Add company from clientData
+        company: clientData.company, // Add company from clientData
         subject: supportForm.subject,
-        // Ensure description is correctly included
         description: supportForm.description,
         priority: supportForm.priority,
         status: 'open',
@@ -90,9 +92,10 @@ const ClientDashboard = () => {
       console.log('Support request created successfully:', res.data);
       setSupportRequests([...supportRequests, res.data]);
       setShowSupportModal(false);
-      fetchClientData(); // Re-fetch data to show the correct initial status
+      // No need to call fetchClientData() here as the useEffect will handle it
       setSupportForm({ subject: '', description: '', priority: 'medium' });
     } catch (err) {
+      
       console.log('handleSubmitRequest: Entering catch block');
       console.error('Error creating support request:', err.response?.data || err.message);
     }
@@ -190,10 +193,6 @@ const ClientDashboard = () => {
                 <FileText className="h-5 w-5 text-purple-600 mr-2" />
                 <span className="text-sm font-medium text-gray-700">Download Reports</span>
               </button>
-              {/* <button className="flex items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                <Calendar className="h-5 w-5 text-orange-600 mr-2" />
-                <span className="text-sm font-medium text-gray-700">Schedule Meeting</span>
-              </button> */}
             </div>
           </div>
 
@@ -364,76 +363,62 @@ const ClientDashboard = () => {
     );
   };
 
+  // Function to handle viewing an invoice
+  const handleViewInvoice = (bill) => {
+    setSelectedBill(bill);
+    setShowInvoiceModal(true);
+  };
+
   const renderBilling = () => {
     if (isLoading) return <div className="text-center py-12">Loading...</div>;
     if (!clientData) return <div className="text-center py-12">No client data found</div>;
 
+    console.log("Client bills state in renderBilling:", clientBills); // Added console.log here
+
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">Billing & Payments</h2>
+        <h2 className="text-2xl font-bold text-gray-900">My Bills</h2>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Current Plan */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Plan</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Billing Cycle</span>
-                <span className="font-semibold text-gray-900">{clientData.billing?.cycle || 'Monthly'}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Next Billing Date</span>
-                <span className="font-semibold text-gray-900">
-                  {clientData.billing?.nextDate || 'Not available'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Payment Method</span>
-                <span className="font-semibold text-gray-900">
-                  {clientData.billing?.paymentMethod || 'Not set up'}
-                </span>
-              </div>
-            </div>
-            <button 
-              onClick={() => alert('Redirect to payment settings')}
-              className="w-full mt-6 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-            >
-              Update Payment Method
-            </button>
-          </div>
-
-          {/* Recent Invoices */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Invoices</h3>
-            <div className="space-y-3">
-              {clientData.invoices?.length > 0 ? (
-                clientData.invoices.slice(0, 3).map((invoice, index) => (
-                  <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
-                    <div>
-                      <div className="font-medium text-gray-900">${invoice.amount}</div>
-                      <div className="text-sm text-gray-500">{invoice.date}</div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        invoice.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'
-                      }`}>
-                        {invoice.status}
-                      </span>
-                      <button 
-                        onClick={() => alert(`Download invoice ${invoice.id}`)}
-                        className="text-blue-600 hover:text-blue-700 text-sm"
-                      >
-                        Download
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-gray-500">No invoices available</p>
-                </div>
-              )}
-            </div>
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Number</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {clientBills.length > 0 ? (
+                  clientBills.map((bill) => (
+                    <tr key={bill._id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{bill.invoiceNumber}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(bill.date).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{bill.subject}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{bill.grandTotal ? bill.grandTotal.toFixed(2) : '0.00'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button 
+                          onClick={() => handleViewInvoice(bill)} // Call handleViewInvoice on click
+                          className="text-blue-600 hover:text-blue-900"
+                          title="View Bill"
+                        >
+                          <Eye className="h-5 w-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                      No bills found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -469,123 +454,97 @@ const ClientDashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Client Dashboard</h1>
-          <p className="text-gray-600">Manage your services and support requests</p>
-        </div>
 
-        {/* Navigation Tabs */}
-        <div className="border-b border-gray-200 mb-8">
-          <nav className="-mb-px flex space-x-8">
-            {[
-              { key: 'overview', label: 'Overview', icon: Settings },
-              { key: 'services', label: 'My Services', icon: Settings },
-              { key: 'support', label: 'Support', icon: MessageSquare },
-              { key: 'billing', label: 'Billing', icon: CreditCard },
-              { key: 'messages', label: 'Messages', icon: MessageSquare }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.key
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Icon className="h-4 w-4 mr-2" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        <div>
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'services' && renderServices()}
-          {activeTab === 'support' && renderSupport()}
-          {activeTab === 'billing' && renderBilling()}
-          {activeTab === 'messages' && renderMessages()}
-        </div>
-
-        {/* Support Request Modal */}
-        {showSupportModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-              <div className="mt-3">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Create Support Request</h3>
-                  <button 
-                    onClick={() => setShowSupportModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <form onSubmit={handleSupportSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-                    <input
-                      type="text"
-                      value={supportForm.subject}
-                      onChange={(e) => setSupportForm({...supportForm, subject: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Brief description of the issue"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                    <select
-                      value={supportForm.priority}
-                      onChange={(e) => setSupportForm({...supportForm, priority: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                    <textarea
-                      value={supportForm.description}
-                      onChange={(e) => setSupportForm({...supportForm, description: e.target.value})}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Detailed description of the issue or request"
-                      required
-                    ></textarea>
-                  </div>
-                  <div className="flex justify-end space-x-3 mt-6">
-                    <button 
-                      type="button"
-                      onClick={() => setShowSupportModal(false)}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                    >
-                      Submit Request
-                    </button>
-                  </div>
-                </form>
-              </div>
+      <>
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900">Client Dashboard</h1>
+              <p className="text-gray-600">Manage your services and support requests</p>
             </div>
+    
+            {/* Navigation Tabs */}
+            <div className="border-b border-gray-200 mb-8">
+              <nav className="-mb-px flex space-x-8">
+                {[
+                  { key: 'overview', label: 'Overview', icon: Settings },
+                  { key: 'services', label: 'My Services', icon: Settings },
+                  { key: 'support', label: 'Support', icon: MessageSquare },
+                  { key: 'billing', label: 'Billing', icon: CreditCard },
+                  { key: 'messages', label: 'Messages', icon: MessageSquare }
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${
+                        activeTab === tab.key
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4 mr-2" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+    
+            {/* Tab Content */}
+            <div>
+              {activeTab === 'overview' && renderOverview()}
+              {activeTab === 'services' && renderServices()}
+              {activeTab === 'support' && renderSupport()}
+              {activeTab === 'billing' && renderBilling()}
+              {activeTab === 'messages' && renderMessages()}
+            </div>
+    
+            {/* Support Modal */}
+            {showSupportModal && /* your modal here... */ null}
+    
+            {/* Invoice Modal */}
+            {showInvoiceModal && selectedBill && (
+              console.log('selectedBill data:', selectedBill), // Added console log here
+              <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-start pt-10 pb-10 ">
+                <div key={selectedBill?.invoiceNumber} className="relative mx-auto w-11/12 md:w-3/4 lg:w-2/3 print:w-auto print:mx-0 print:my-0 print:shadow-none print:p-0 print:bg-white print:!max-w-full print:!top-0">
+                  <div>
+                    <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 p-4 rounded-t-lg">
+                      <h3 className="text-lg font-medium text-gray-900">
+                        Invoice #{selectedBill.invoiceNumber}
+                      </h3>
+                      <button
+                        onClick={() => setShowInvoiceModal(true)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <button onClick={() => {
+ const modal = document.querySelector('.fixed.inset-0');
+ const printButton = document.querySelector('.mt-0.mb-4.bg-blue-600');
+ if (modal) modal.classList.add('print-hidden');
+ if (printButton) printButton.classList.add('print-hidden');
+                      console.log('Print button clicked');
+                      window.print();
+ setTimeout(() => { if (modal) modal.classList.remove('print-hidden'); if (printButton) printButton.classList.remove('print-hidden'); }, 500); // Remove class after a short delay
+                    }} className="mt-0 mb-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      Print Invoice
+                    </button>
+                  </div>
+                  <div id="invoice-content-to-print" className="print:w-a4 print:h-a4 print:mx-auto print:my-0 print:overflow-visible">
+                    <InvoiceTemplate billData={selectedBill} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
-  );
-};
+        </div>
+    
+        {/* ✅ PRINT STYLE FIXED AND INCLUDED INSIDE FRAGMENT */}
+      </>
+    );
+  };
 
 export default ClientDashboard;

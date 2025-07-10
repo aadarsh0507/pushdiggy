@@ -1,0 +1,35 @@
+@media print {
+  /* Hide everything except the invoice content */
+  /* body div:not(#invoice-content-to-print) { */
+  /*   display: none; */
+  /* } */
+
+  /* Ensure the modal container and its children are visible */
+  .fixed.inset-0,
+  .fixed.inset-0 * {
+    visibility: visible !important;
+    display: block !important; /* Ensure block display for layout */
+  }
+
+  /* Hide the duplicate Invoice # header in the modal */
+  .fixed.inset-0 h3 {
+   display: block !important;
+ }
+
+
+
+
+   #invoice-content-to-print * {
+     display: block !important;
+     visibility: visible !important;
+     /* Add borders for debugging print layout */
+     border: 1px solid black;
+     padding: 2mm !important; /* Reduce padding */
+     margin: 0 !important; /* Remove margin */
+   }
+
+   #invoice-content-to-print table,
+   #invoice-content-to-print div {
+     border: 1px solid blue !important; /* Use a different color for key elements */
+   }
+}
