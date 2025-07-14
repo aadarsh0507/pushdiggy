@@ -51,6 +51,7 @@ const InvoiceTemplate = ({ billData }) => {
             display: flex !important;
             justify-content: space-between !important;
             align-items: flex-start !important;
+            gap: 20px !important;
           }
 
           .print-visible img {
@@ -70,12 +71,27 @@ const InvoiceTemplate = ({ billData }) => {
             word-break: break-word !important;
           }
 
-          .text-right.text-sm.text-gray-600 {
+                    .text-right.text-sm.text-gray-500 {
             text-align: right !important;
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 2px !important;
+            display: block !important;
+            max-width: 180px !important;
+            word-break: break-word !important;
+            white-space: normal !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
+
+          
+
+         
+
+          .text-right.text-sm.text-gray-500 .break-words {
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
+            display: inline !important;
+          }
+
 
           table, .mt-8 {
             page-break-inside: avoid !important;
@@ -84,7 +100,7 @@ const InvoiceTemplate = ({ billData }) => {
       `}</style>
 
       {/* HEADER */}
-      <div className="flex justify-between items-start border-b pb-6 border-gray-300 print-visible">
+      <div className="flex justify-between items-center border-b pb-6 border-gray-300 print-visible">
         <div className="flex items-center gap-4">
           <img src={logo} alt="Logo" className="h-12" />
           <div className="flex flex-col justify-center">
@@ -93,15 +109,19 @@ const InvoiceTemplate = ({ billData }) => {
           </div>
         </div>
 
-        <div className="text-right text-sm text-gray-600 space-y-1">
-          <p>Acharapakkam</p>
-          <p>Mobile: 9150690961</p>
- <div className="email-display">
- <p>Email: pushdiggy@gmail.com</p>
- </div>
- <div className="gstin-display">
- <p>GST No: 9632587412563</p>
- </div>
+        <div className="contact-print-block">
+          <div className="contact-line">Acharapakkam</div>
+          <div className="contact-line">Mobile: 9150690961</div>
+          <div className="contact-line">
+            Email:
+            <br />
+            <span className="contact-break">pushdiggy@gmail.com</span>
+          </div>
+          <div className="contact-line">
+            GST No:
+            <br />
+            <span className="contact-break">9632587412563</span>
+          </div>
         </div>
       </div>
 
@@ -125,13 +145,15 @@ const InvoiceTemplate = ({ billData }) => {
         <p className="text-base font-semibold text-gray-800">To</p>
         <p className="text-sm text-gray-700 mt-2">{billData.billTo?.name}</p>
         <p className="text-sm text-gray-700 mt-1">{billData.billTo?.address}</p>
-        <p className="text-sm text-gray-700 mt-1">GSTIN: {billData.billTo?.gstin}</p>
+        <p className="text-sm text-gray-700 mt-1">
+          GSTIN: {billData.billTo?.gstin}
+        </p>
       </div>
 
       {/* SUBJECT */}
       <div className="mt-8">
         <p className="text-sm font-semibold text-gray-800">
-          Subject: {billData.subject || 'N/A'}
+          Subject: {billData.subject || "N/A"}
         </p>
       </div>
 
@@ -154,8 +176,12 @@ const InvoiceTemplate = ({ billData }) => {
           <tbody>
             {billData.items?.map((item, index) => (
               <tr key={index} className="hover:bg-gray-50">
-                <td className="py-3 px-4 text-sm text-gray-700 border-b border-gray-200">{index + 1}</td>
-                <td className="py-3 px-4 text-sm text-gray-700 border-b border-gray-200">{item.description}</td>
+                <td className="py-3 px-4 text-sm text-gray-700 border-b border-gray-200">
+                  {index + 1}
+                </td>
+                <td className="py-3 px-4 text-sm text-gray-700 border-b border-gray-200">
+                  {item.description}
+                </td>
                 <td className="py-3 px-4 text-sm text-gray-700 text-right border-b border-gray-200">
                   ₹{parseFloat(item.amount || 0).toFixed(2)}
                 </td>
@@ -165,8 +191,14 @@ const InvoiceTemplate = ({ billData }) => {
         </table>
 
         <div className="p-4 bg-gray-50 text-right text-sm text-gray-700 space-y-1">
-          <p>SGST ({billData.sgstPercent || 0}%): ₹{parseFloat(billData.sgst || 0).toFixed(2)}</p>
-          <p>CGST ({billData.cgstPercent || 0}%): ₹{parseFloat(billData.cgst || 0).toFixed(2)}</p>
+          <p>
+            SGST ({billData.sgstPercent || 0}%): ₹
+            {parseFloat(billData.sgst || 0).toFixed(2)}
+          </p>
+          <p>
+            CGST ({billData.cgstPercent || 0}%): ₹
+            {parseFloat(billData.cgst || 0).toFixed(2)}
+          </p>
           <p className="text-xl font-bold text-gray-800 pt-2">
             Grand Total: ₹{parseFloat(billData.grandTotal || 0).toFixed(2)}
           </p>
@@ -174,16 +206,18 @@ const InvoiceTemplate = ({ billData }) => {
       </div>
 
       {/* FOOTER */}
-      <div className="flex justify-between items-start mt-8">
+      <div className="flex justify-between items-center mt-8">
         <div className="text-sm text-gray-700 w-1/2 pr-4">
-          <h4 className="font-semibold text-gray-800 mb-2">Bank Transfer Details</h4>
+          <h4 className="font-semibold text-gray-800 mb-2">
+            Bank Transfer Details
+          </h4>
           <p>Account Name: {billData.bankDetails?.accountName}</p>
           <p>A/c No: {billData.bankDetails?.accountNumber}</p>
           <p>IFSC Code: {billData.bankDetails?.ifscCode}</p>
           <p>Bank: {billData.bankDetails?.bankName}</p>
           <p>Branch: {billData.bankDetails?.branch}</p>
         </div>
-        <div className="text-center text-sm text-gray-700 w-1/2 pl-4">
+        <div className="text-center text-sm text-gray-700 w-1/2 pl-4 flex flex-col justify-center items-center">
           <p>For PD Solutions</p>
         </div>
       </div>
