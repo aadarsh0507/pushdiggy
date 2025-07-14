@@ -225,7 +225,7 @@ const AdminBilling = () => {
                 &times;
               </button>
             </div>
-            <InvoiceTemplate billData={previewBillData} />
+            <InvoiceTemplate billData={previewBillData} /> {/* Ensure prop is named billData */}
           </div>
         </div>
       )}

@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Settings, MessageSquare, CreditCard, FileText, Plus, Calendar, CheckCircle, Clock, AlertTriangle, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
-import InvoiceTemplate from '../components/InvoiceTemplate'; // Import the InvoiceTemplate component
+// import InvoiceTemplate from '../components/InvoiceTemplate'; // Import the InvoiceTemplate component
+import InvoiceTemplate from '../components/InvoiceTemplate.jsx'; // Import the InvoiceTemplate component
+import jsPDF from 'jspdf';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import './../styles/print.css'; // Import the print styles
  
 const ClientDashboard = () => {
@@ -23,27 +26,26 @@ const ClientDashboard = () => {
 
   // Fetch client data, support requests, and bills
   useEffect(() => {
+ console.log('ClientDashboard useEffect: user:', user, 'user?.id:', user?.id); // Log user and user?.id at the beginning
+    
+    if (!user || !user.id) {
+      console.log('User or user ID not available, skipping data fetch');
+      return; // Exit if user or user ID is not available
+    }
     const fetchClientDataAndBills = async () => {
       try {
         setIsLoading(true);
         console.log(`Fetching client data for user ID: ${user.id}`);
         const clientRes = await api.get(`/clients/${user.id}`);
         setClientData(clientRes.data);
-        console.log('Client data fetched successfully:', clientRes.data);
-
         console.log(`Fetching support requests for client ID: ${user.id}`);
         const supportRes = await api.get(`/support-requests/client/${user.id}`);
-        const formattedSupportRequests = supportRes.data.map(request => ({
-          ...request,
-          assignedTo: request.assignedTo ? { name: request.assignedTo.name } : null
-        }));
-        setSupportRequests(formattedSupportRequests);
-        console.log('Support requests state updated with:', supportRes.data);
+        setSupportRequests(supportRes.data);
 
         console.log(`Fetching bills for client ID: ${user.id}`);
         const billsRes = await api.get(`/billing/bills/client/${user.id}`);
+        console.log('Response data from fetching bills:', billsRes.data); // Log billsRes.data
         setClientBills(billsRes.data);
-        console.log('Client bills fetched successfully:', billsRes.data);
 
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -52,10 +54,7 @@ const ClientDashboard = () => {
       }
     };
 
-    if (user?.id) {
-      console.log("Fetching data for user:", user.id);
-      fetchClientDataAndBills();
-    }
+    fetchClientDataAndBills();
 
     const handleTicketUpdated = () => {
       console.log("ticketUpdatedEvent received in ClientDashboard.");
@@ -66,7 +65,9 @@ const ClientDashboard = () => {
     return () => {
       window.removeEventListener('ticketUpdatedEvent', handleTicketUpdated);
     };
-  }, [user]); 
+  }, [user]);
+
+  console.log('ClientBills state after useEffect:', clientBills); // Log clientBills state after useEffect
 
   const handleSupportSubmit = async (e) => {
     e.preventDefault();
@@ -364,16 +365,40 @@ const ClientDashboard = () => {
   };
 
   // Function to handle viewing an invoice
-  const handleViewInvoice = (bill) => {
-    setSelectedBill(bill);
-    setShowInvoiceModal(true);
+  const handleViewInvoice = (bill) => {    setSelectedBill(bill);    setShowInvoiceModal(true);
   };
-
   const renderBilling = () => {
+    const handleDownloadInvoice = async (billId) => {
+      try {
+        // Make API call to backend to get PDF data
+        const response = await api.get(`/billing/bills/${billId}/pdf`, {
+          responseType: 'blob', // Important: responseType must be 'blob' for file downloads
+        });
+
+        // Create a blob from the response data
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+
+        // Create a link element
+        const link = document.createElement('a');
+        
+        // Set the download attribute and create a URL for the blob
+        link.href = window.URL.createObjectURL(blob);
+        link.download = `invoice_${billId}.pdf`; // Set the filename
+
+        // Append the link to the body and click it to trigger the download
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up by removing the link and revoking the object URL
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(link.href);
+      } catch (error) {
+        console.error('Error downloading invoice:', error);
+      }
+    };
     if (isLoading) return <div className="text-center py-12">Loading...</div>;
     if (!clientData) return <div className="text-center py-12">No client data found</div>;
 
-    console.log("Client bills state in renderBilling:", clientBills); // Added console.log here
 
     return (
       <div className="space-y-6">
@@ -406,6 +431,13 @@ const ClientDashboard = () => {
                           title="View Bill"
                         >
                           <Eye className="h-5 w-5" />
+                        </button>
+                        <button 
+                          onClick={() => handleDownloadInvoice(bill._id)} // Call handleDownloadInvoice on click
+                          className="text-green-600 hover:text-green-900 ml-2"
+                          title="Download Invoice PDF"
+                        >
+                          <FileText className="h-5 w-5" />
                         </button>
                       </td>
                     </tr>
@@ -521,17 +553,8 @@ const ClientDashboard = () => {
                         ✕
                       </button>
                     </div>
-                    <button onClick={() => {
- const modal = document.querySelector('.fixed.inset-0');
- const printButton = document.querySelector('.mt-0.mb-4.bg-blue-600');
- if (modal) modal.classList.add('print-hidden');
- if (printButton) printButton.classList.add('print-hidden');
-                      console.log('Print button clicked');
-                      window.print();
- setTimeout(() => { if (modal) modal.classList.remove('print-hidden'); if (printButton) printButton.classList.remove('print-hidden'); }, 500); // Remove class after a short delay
-                    }} className="mt-0 mb-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                      Print Invoice
-                    </button>
+                    <button onClick={() => { navigate(`/print-invoice/${selectedBill._id}`); setShowInvoiceModal(false); }} className="mt-0 mb-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Print Invoice</button>
+
                   </div>
                   <div id="invoice-content-to-print" className="print:w-a4 print:h-a4 print:mx-auto print:my-0 print:overflow-visible">
                     <InvoiceTemplate billData={selectedBill} />

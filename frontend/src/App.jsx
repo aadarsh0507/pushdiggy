@@ -13,6 +13,7 @@ import ClientDashboard from './pages/ClientDashboard';
 import ClientRegister from './pages/ClientRegister';
 import AdminRegister from './pages/AdminRegister';
 import AdminBilling from './components/AdminBilling';
+import PrintInvoicePage from './pages/PrintInvoicePage';
 
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route path="/print-invoice/:invoiceId" element={<PrintInvoicePage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

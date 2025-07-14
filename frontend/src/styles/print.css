@@ -1,35 +1,81 @@
 @media print {
   /* Hide everything except the invoice content */
-  /* body div:not(#invoice-content-to-print) { */
-  /*   display: none; */
-  /* } */
-
-  /* Ensure the modal container and its children are visible */
-  .fixed.inset-0,
-  .fixed.inset-0 * {
-    visibility: visible !important;
-    display: block !important; /* Ensure block display for layout */
+  body > *:not(#invoice-content-to-print) {
+    display: none !important;
   }
 
-  /* Hide the duplicate Invoice # header in the modal */
-  .fixed.inset-0 h3 {
-   display: block !important;
- }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+  }
 
+  /* A4 size container */
+  #invoice-content-to-print {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    padding: 15mm 20mm !important; /* Adjust margins for print */
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    background: white !important;
+    page-break-after: avoid !important;
+  }
 
+  /* Ensure common elements print cleanly */
+  #invoice-content-to-print * {
+    color-adjust: exact !important; /* For colors */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 12pt !important;
+    box-sizing: border-box !important;
+  }
 
+  /* Keep table contents visible and non-breaking */
+  #invoice-content-to-print table,
+  #invoice-content-to-print thead,
+  #invoice-content-to-print tbody,
+  #invoice-content-to-print tr,
+  #invoice-content-to-print td,
+  #invoice-content-to-print th {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
 
-   #invoice-content-to-print * {
-     display: block !important;
-     visibility: visible !important;
-     /* Add borders for debugging print layout */
-     border: 1px solid black;
-     padding: 2mm !important; /* Reduce padding */
-     margin: 0 !important; /* Remove margin */
-   }
+  /* Ensure email and GSTIN are on separate lines and remove extra space */
+  #invoice-content-to-print .email-display,
+  #invoice-content-to-print .gstin-display {
+    display: block !important;
+    margin: 0 !important; /* Remove any default paragraph margins */
+    padding: 0 !important;
+  }
+  /* Hide elements with the no-print class */
+  .no-print {
+    display: none !important;
+  }
 
-   #invoice-content-to-print table,
-   #invoice-content-to-print div {
-     border: 1px solid blue !important; /* Use a different color for key elements */
-   }
+  /* Flex containers */
+  #invoice-content-to-print .flex,
+  #invoice-content-to-print .flex-container {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+  }
+
+  /* Fix alignment of logo + heading + contact */
+  #invoice-content-to-print .logo-section {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  /* Prevent unwanted scaling */
+  @page {
+    size: A4;
+    margin: 0;
+  }
 }
