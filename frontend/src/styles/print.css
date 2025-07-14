@@ -18,23 +18,23 @@
     position: static !important;
     width: 210mm !important;
     height: 297mm !important;
-    padding: 15mm 20mm !important; /* Adjust margins for print */
+    padding: 15mm 20mm !important;
     margin: 0 auto !important;
     box-sizing: border-box !important;
     background: white !important;
     page-break-after: avoid !important;
   }
 
-  /* Ensure common elements print cleanly */
+  /* Ensure clean print formatting */
   #invoice-content-to-print * {
-    color-adjust: exact !important; /* For colors */
+    color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     font-size: 12pt !important;
     box-sizing: border-box !important;
   }
 
-  /* Keep table contents visible and non-breaking */
+  /* Keep table contents from breaking mid-row */
   #invoice-content-to-print table,
   #invoice-content-to-print thead,
   #invoice-content-to-print tbody,
@@ -45,19 +45,12 @@
     break-inside: avoid !important;
   }
 
-  /* Ensure email and GSTIN are on separate lines and remove extra space */
-  #invoice-content-to-print .email-display,
-  #invoice-content-to-print .gstin-display {
-    display: block !important;
-    margin: 0 !important; /* Remove any default paragraph margins */
-    padding: 0 !important;
-  }
-  /* Hide elements with the no-print class */
+  /* Hide print button or any other elements */
   .no-print {
     display: none !important;
   }
 
-  /* Flex containers */
+  /* Flex containers fix */
   #invoice-content-to-print .flex,
   #invoice-content-to-print .flex-container {
     display: flex !important;
@@ -66,14 +59,42 @@
     align-items: flex-start !important;
   }
 
-  /* Fix alignment of logo + heading + contact */
+  /* Logo + heading */
   #invoice-content-to-print .logo-section {
     display: flex !important;
     align-items: center !important;
     gap: 10px !important;
   }
 
-  /* Prevent unwanted scaling */
+  /* Company contact block fix */
+  .company-contact {
+    max-width: 200px !important;
+    text-align: right !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+
+  .company-contact .contact-line {
+    font-size: 11px !important;
+    line-height: 1.5 !important;
+    margin: 0 0 6px 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  .company-contact .contact-break {
+    display: inline-block !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+  }
+
+  /* Prevent scaling for A4 output */
   @page {
     size: A4;
     margin: 0;
