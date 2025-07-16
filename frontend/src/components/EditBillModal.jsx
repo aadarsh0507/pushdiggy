@@ -14,7 +14,7 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
     sgstAmount: billData.sgst || 0, // Initialize SGST Amount directly
     cgstAmount: billData.cgst || 0, // Initialize CGST Amount directly
     grandTotal: billData.grandTotal || 0,
-    services: billData.items || [], // Use 'items' from billData, and rename internally to 'services'
+    services: billData.items.map(item => ({ ...item, quantity: item.quantity || 1 })) || [], // Use 'items' from billData, ensure quantity exists
     clientId: billData.client?._id || '', // Store the client ID
     billTo: {
       name: billData.billTo?.name || '',
@@ -43,7 +43,7 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
       sgstAmount: billData.sgst || 0, // Set SGST Amount directly
       cgstAmount: billData.cgst || 0, // Set CGST Amount directly
       grandTotal: billData.grandTotal || 0,
-      services: billData.items || [], // Use 'items' from billData
+      services: billData.items.map(item => ({ ...item, quantity: item.quantity || 1 })) || [], // Use 'items' from billData, ensure quantity exists
       clientId: billData.client?._id || '', // Update the client ID
       billTo: {
         name: billData.billTo?.name || '',
@@ -66,7 +66,10 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
   // Function to calculate SGST Amount, CGST Amount, and Grand Total
   // This now depends on editable subtotal and percentages
   const calculateTotals = () => {
-    const currentSubtotal = parseFloat(editedBill.subtotal || 0);
+    // Recalculate subtotal based on items, amount, and quantity
+    const currentSubtotal = editedBill.services.reduce((sum, item) =>
+      sum + (parseFloat(item.amount || 0) * parseFloat(item.quantity || 0))
+    , 0);
     const sgstPercent = parseFloat(editedBill.sgstPercent || 0);
     const cgstPercent = parseFloat(editedBill.cgstPercent || 0);
 
@@ -75,17 +78,18 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
     const calculatedGrandTotal = currentSubtotal + calculatedSgstAmount + calculatedCgstAmount;
 
     setEditedBill(prev => ({
-      ...prev,
+      ...prev, // Keep previous state
+      subtotal: currentSubtotal, // Update subtotal based on items
       sgstAmount: calculatedSgstAmount,
       cgstAmount: calculatedCgstAmount,
       grandTotal: calculatedGrandTotal,
     }));
   };
 
-  // Effect to trigger calculations when editable amounts or percentages change
+  // Effect to trigger calculations when services (items), amount, or percentages change
   useEffect(() => {
     calculateTotals();
-  }, [editedBill.subtotal, editedBill.sgstPercent, editedBill.cgstPercent]);
+  }, [editedBill.services, editedBill.sgstPercent, editedBill.cgstPercent]);
 
 
   const handleInputChange = (e) => {
@@ -107,7 +111,7 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
     }
   };
 
-  // handleServiceChange now only handles description and amount
+  // handleServiceChange handles description, amount, and quantity
   const handleServiceChange = (index, e) => {
     const { name, value, type } = e.target;
     const updatedServices = [...editedBill.services];
@@ -118,11 +122,11 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
     setEditedBill(prev => ({ ...prev, services: updatedServices }));
   };
 
-  // addService now adds an item with description and amount
+  // addService now adds an item with description, amount, and quantity
   const addService = () => {
     setEditedBill(prev => ({
       ...prev,
-      services: [...prev.services, { description: '', amount: 0 }],
+      services: [...prev.services, { description: '', amount: 0, quantity: 1 }],
     }));
   };
 
@@ -135,7 +139,7 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
   const handleSave = () => {
     const billToSave = {
       ...editedBill,
-      client: editedBill.clientId, // Map clientId to client for backend
+      client: editedBill.clientId || undefined, // Ensure clientId is correctly mapped to client for backend
       items: editedBill.services, // Map services to items for backend
       sgst: editedBill.sgstAmount, // Map sgstAmount to sgst
       cgst: editedBill.cgstAmount, // Map cgstAmount to cgst
@@ -194,16 +198,34 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
             </div>
           </div>
 
-          {/* Tax and Totals - Now with editable Subtotal */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          {/* Services - now using 'amount' directly */}
+          <div className="mb-4">
+            <h4 className="text-md font-semibold text-gray-800 mb-2">Services</h4>
+            {/* Header for item columns */}
+            <div className="grid grid-cols-5 gap-2 text-sm font-medium text-gray-700 mb-1 px-1">
+              <div className="col-span-2">Description</div><div>Quantity</div><div>Amount</div><div></div> {/* Empty header for remove button column */}
+            </div>
+            {editedBill.services.map((service, index) => (
+              <div key={index} className="grid grid-cols-5 gap-2 items-center mb-2"> {/* Adjusted grid-cols to 5 for description (2), quantity (1), amount (1), remove (1) */}
+                <input type="text" name="description" value={service.description} onChange={(e) => handleServiceChange(index, e)} placeholder="Description" className="rounded-md border-gray-300 shadow-sm sm:text-sm col-span-2" />
+                <input type="number" name="quantity" value={service.quantity} onChange={(e) => handleServiceChange(index, e)} placeholder="Quantity" className="rounded-md border-gray-300 shadow-sm sm:text-sm" min="1" />
+                <input type="number" name="amount" value={service.amount} onChange={(e) => handleServiceChange(index, e)} placeholder="Amount" step="0.01" className="rounded-md border-gray-300 shadow-sm sm:text-sm" />
+                <button type="button" onClick={() => removeService(index)} className="text-red-600 hover:text-red-800 text-sm">Remove</button>
+              </div>
+            ))}
+            <button type="button" onClick={addService} className="mt-2 text-sm text-blue-600 hover:underline">+ Add Service</button>
+          </div>
+
+          {/* Tax and Totals - Subtotal is now derived from items */}
+          <div className="mb-4">
             <div>
               <label htmlFor="subtotal" className="block text-sm font-medium text-gray-700">Subtotal Amount</label>
               <input
                 type="number"
                 name="subtotal"
                 id="subtotal"
-                value={editedBill.subtotal} // This is now an editable input
-                onChange={handleInputChange}
+                value={(editedBill.subtotal || 0).toFixed(2)} // Display calculated subtotal
+                readOnly // Subtotal is calculated, not directly editable
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
                 step="0.01"
               />
@@ -262,19 +284,6 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
               <input type="text" name="bankDetails.bankName" value={editedBill.bankDetails.bankName} onChange={handleInputChange} placeholder="Bank Name" className="rounded-md border-gray-300 shadow-sm sm:text-sm" />
               <input type="text" name="bankDetails.branch" value={editedBill.bankDetails.branch} onChange={handleInputChange} placeholder="Branch" className="rounded-md border-gray-300 shadow-sm sm:text-sm" />
             </div>
-          </div>
-
-          {/* Services - now using 'amount' directly */}
-          <div className="mb-4">
-            <h4 className="text-md font-semibold text-gray-800 mb-2">Services</h4>
-            {editedBill.services.map((service, index) => (
-              <div key={index} className="grid grid-cols-3 gap-2 items-center mb-2"> {/* Adjusted grid-cols */}
-                <input type="text" name="description" value={service.description} onChange={(e) => handleServiceChange(index, e)} placeholder="Description" className="rounded-md border-gray-300 shadow-sm sm:text-sm col-span-2" /> {/* Span more columns */}
-                <input type="number" name="amount" value={service.amount} onChange={(e) => handleServiceChange(index, e)} placeholder="Amount" step="0.01" className="rounded-md border-gray-300 shadow-sm sm:text-sm" />
-                <button type="button" onClick={() => removeService(index)} className="text-red-600 hover:text-red-800 text-sm">Remove</button>
-              </div>
-            ))}
-            <button type="button" onClick={addService} className="mt-2 text-sm text-blue-600 hover:underline">+ Add Service</button>
           </div>
 
           {/* Buttons */}

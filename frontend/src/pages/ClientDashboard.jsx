@@ -91,6 +91,7 @@ const ClientDashboard = () => {
       const res = await api.post('/support-requests', newRequest);
       console.log('handleSubmitRequest: API call successful, received response:', res);
       console.log('Support request created successfully:', res.data);
+      console.log('Response data from ticket creation:', res.data); // Add this line to inspect res.data
       setSupportRequests([...supportRequests, res.data]);
       setShowSupportModal(false);
       // No need to call fetchClientData() here as the useEffect will handle it
@@ -310,6 +311,7 @@ const ClientDashboard = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+ <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket Number</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -319,15 +321,17 @@ const ClientDashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {supportRequests.map((request) => (
- console.log("Assigned To for ticket:", request.assignedTo),
-                  console.log("Rendering ticket with client ID:", request.clientId, "and ticket ID:", request._id),
+ // console.log("Assigned To for ticket:", request.assignedTo),
+ // console.log("Rendering ticket with client ID:", request.clientId, "and ticket ID:", request._id),
                   <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{request.ticketNumber}</td>
+ <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{request.subject}</div>
                         <div className="text-sm text-gray-500">{request.description.substring(0, 50)}...</div>
-                      </div>
-                    </td>
+ {/* Close the div for the description */}
+ </div>{/* Close the outer div */}
+ </td> {/* Close the td */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit ${getStatusColor(request.priority)}`}>
                         {getPriorityIcon(request.priority)}
@@ -367,37 +371,7 @@ const ClientDashboard = () => {
   // Function to handle viewing an invoice
   const handleViewInvoice = (bill) => {    setSelectedBill(bill);    setShowInvoiceModal(true);
   };
-  const renderBilling = () => {
-    const handleDownloadInvoice = async (billId) => {
-      try {
-        // Make API call to backend to get PDF data
-        const response = await api.get(`/billing/bills/${billId}/pdf`, {
-          responseType: 'blob', // Important: responseType must be 'blob' for file downloads
-        });
-
-        // Create a blob from the response data
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-
-        // Create a link element
-        const link = document.createElement('a');
-        
-        // Set the download attribute and create a URL for the blob
-        link.href = window.URL.createObjectURL(blob);
-        link.download = `invoice_${billId}.pdf`; // Set the filename
-
-        // Append the link to the body and click it to trigger the download
-        document.body.appendChild(link);
-        link.click();
-
-        // Clean up by removing the link and revoking the object URL
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(link.href);
-      } catch (error) {
-        console.error('Error downloading invoice:', error);
-      }
-    };
-    if (isLoading) return <div className="text-center py-12">Loading...</div>;
-    if (!clientData) return <div className="text-center py-12">No client data found</div>;
+  const renderBilling = () => {    if (isLoading) return <div className="text-center py-12">Loading...</div>;    if (!clientData) return <div className="text-center py-12">No client data found</div>;
 
 
     return (
@@ -425,25 +399,20 @@ const ClientDashboard = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{bill.subject}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{bill.grandTotal ? bill.grandTotal.toFixed(2) : '0.00'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button 
+ <button className="flex items-center justify-center text-green-600 hover:text-green-900"
                           onClick={() => handleViewInvoice(bill)} // Call handleViewInvoice on click
-                          className="text-blue-600 hover:text-blue-900"
-                          title="View Bill"
+                         
+                          title="View Invoice"
                         >
-                          <Eye className="h-5 w-5" />
-                        </button>
-                        <button 
-                          onClick={() => handleDownloadInvoice(bill._id)} // Call handleDownloadInvoice on click
-                          className="text-green-600 hover:text-green-900 ml-2"
-                          title="Download Invoice PDF"
-                        >
-                          <FileText className="h-5 w-5" />
-                        </button>
+ <Eye className="h-5 w-5" /> {/* Corrected the closing tag */}
+ </button>
                       </td>
                     </tr>
                   ))
                 ) : (
+
                   <tr>
+
                     <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
                       No bills found.
                     </td>
@@ -534,29 +503,90 @@ const ClientDashboard = () => {
             </div>
     
             {/* Support Modal */}
-            {showSupportModal && /* your modal here... */ null}
+            {showSupportModal && (
+              <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+                <div className="relative p-8 bg-white w-full max-w-md m-auto flex-col flex rounded-lg shadow-lg">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-2xl font-bold text-gray-900">New Support Request</h3>
+                    <button
+                      onClick={() => setShowSupportModal(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <form onSubmit={handleSupportSubmit}>
+                    <div className="mb-4">
+                      <label htmlFor="subject" className="block text-sm font-medium text-gray-700">Subject</label>
+                      <input
+                        type="text"
+                        id="subject"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                        value={supportForm.subject}
+                        onChange={(e) => setSupportForm({ ...supportForm, subject: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+                      <textarea
+                        id="description"
+                        rows="4"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                        value={supportForm.description}
+                        onChange={(e) => setSupportForm({ ...supportForm, description: e.target.value })}
+                        required
+                      ></textarea>
+                    </div>
+                    <div className="mb-6">
+                      <label htmlFor="priority" className="block text-sm font-medium text-gray-700">Priority</label>
+                      <select
+                        id="priority"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                        value={supportForm.priority}
+                        onChange={(e) => setSupportForm({ ...supportForm, priority: e.target.value })}
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </select>
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowSupportModal(false)}
+                        className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg mr-2 hover:bg-gray-400 transition-colors duration-200"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                      >
+                        Submit Request
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
     
             {/* Invoice Modal */}
             {showInvoiceModal && selectedBill && (
               console.log('selectedBill data:', selectedBill), // Added console log here
               <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-start pt-10 pb-10 ">
-                <div key={selectedBill?.invoiceNumber} className="relative mx-auto w-11/12 md:w-3/4 lg:w-2/3 print:w-auto print:mx-0 print:my-0 print:shadow-none print:p-0 print:bg-white print:!max-w-full print:!top-0">
+                <div key={selectedBill?._id} className="relative mx-auto w-11/12 md:w-3/4 lg:w-2/3 print:w-auto print:mx-0 print:my-0 print:shadow-none print:p-0 print:bg-white print:!max-w-full print:!top-0">
                   <div>
                     <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 p-4 rounded-t-lg">
-                      <h3 className="text-lg font-medium text-gray-900">
-                        Invoice #{selectedBill.invoiceNumber}
-                      </h3>
                       <button
-                        onClick={() => setShowInvoiceModal(true)}
+                        onClick={() => setShowInvoiceModal(false)}
                         className="text-gray-400 hover:text-gray-600"
                       >
                         ✕
                       </button>
                     </div>
-                    <button onClick={() => { navigate(`/print-invoice/${selectedBill._id}`); setShowInvoiceModal(false); }} className="mt-0 mb-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Print Invoice</button>
-
                   </div>
-                  <div id="invoice-content-to-print" className="print:w-a4 print:h-a4 print:mx-auto print:my-0 print:overflow-visible">
+                  <div>
                     <InvoiceTemplate billData={selectedBill} />
                   </div>
                 </div>

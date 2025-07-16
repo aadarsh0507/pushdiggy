@@ -1,11 +1,26 @@
 import SupportRequest from '../models/SupportRequest.js';
 import mongoose from 'mongoose';
+import SupportTicketCounter from '../models/SupportTicketCounter.js';
 
 // Create a new support request
 export const createSupportRequest = async (req, res) => {
   try {
-    const newRequest = new SupportRequest(req.body);
+    // Generate unique ticket number
+    // Use findOneAndUpdate to get the updated counter value
+    const counter = await SupportTicketCounter.findByIdAndUpdate(
+      { _id: 'supportTicket' },
+      { $inc: { sequence_value: 1 } },
+      { new: true, upsert: true }
+    );
+    const ticketNumber = `TKPD${counter.sequence_value.toString().padStart(3, '0')}`;
+    const newRequest = new SupportRequest({
+      ...req.body,
+      ticketNumber: ticketNumber,
+    });
+
+    console.log('New request object before saving:', newRequest);
     await newRequest.save();
+    console.log('New request object after saving:', newRequest);
     res.status(201).json(newRequest);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

@@ -9,7 +9,7 @@ const billSchema = new mongoose.Schema({
   client: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Client',
-    required: true,
+    required: false, // Changed to false to allow bills for non-clients
   },
 
   billTo: {
@@ -32,6 +32,10 @@ const billSchema = new mongoose.Schema({
       trim: true,
     },
     amount: {
+      type: Number,
+      required: true,
+    },
+   quantity : {
       type: Number,
       required: true,
     },
@@ -91,6 +95,8 @@ const billSchema = new mongoose.Schema({
     default: 'sent',
   },
 }, { timestamps: true });
+
+console.log('Bill model loaded. Schema:', billSchema.obj);
 
 const Bill = mongoose.model('Bill', billSchema);
 
