@@ -69,15 +69,15 @@ const AdminDashboard = () => {
   }, []); // Fetch when component mounts
 
   // Fetch bills from backend
+  const fetchBills = async () => {
+    try {
+      const res = await api.get('/billing/bills'); // Corrected endpoint to match backend routing
+      setBills(res.data);
+    } catch (err) {
+      console.error('Error fetching bills:', err);
+    }
+  };
   useEffect(() => {
-    const fetchBills = async () => {
-      try {
-        const res = await api.get('/billing/bills'); // Corrected endpoint to match backend routing
-        setBills(res.data);
-      } catch (err) {
-        console.error('Error fetching bills:', err);
-      }
-    };
     fetchBills();
   }, []); // Fetch when component mounts
 

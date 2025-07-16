@@ -31,7 +31,7 @@ const AdminSupportTickets = () => {
     // Fetch admins
     const fetchAdmins = async () => {
       try {
-        const res = await api.get('/admin/admins'); // Changed endpoint to match backend routing
+        const res = await api.get('admin/admins'); // Changed endpoint to match backend routing
         setAdmins(res.data);
       } catch (err) {
         console.error('Error fetching admins:', err);
@@ -73,15 +73,35 @@ const AdminSupportTickets = () => {
   const handleUpdateTicket = async (ticketId, updatedFields) => {
     try {
       const res = await api.put(`/support-requests/${ticketId}`, updatedFields);
-      console.log("Backend response data structure:", res.data);
-      console.log("Value of res.data.assignedTo after update:", res.data.assignedTo);
-      console.log("Updated ticket data from backend:", res.data); // Log updated data
-      window.dispatchEvent(new Event('ticketUpdatedEvent')); // Dispatch custom event
-      setTickets(tickets.map(ticket => (ticket._id === ticketId ? res.data : ticket)));
+      const updatedTicket = res.data;
+  
+      console.log("Backend response data structure:", updatedTicket);
+      console.log("Value of res.data.assignedTo after update:", updatedTicket.assignedTo);
+  
+      // ✅ Update tickets with the new fully populated ticket
+      setTickets(prevTickets =>
+        prevTickets.map(ticket =>
+          ticket._id === ticketId ? updatedTicket : ticket
+        )
+      );
+  
+      // ✅ Optional: update assignedTo state map for controlled dropdown
+      setAssignedTo(prev => ({
+        ...prev,
+        [ticketId]: updatedTicket.assignedTo?._id || '',
+      }));
+  
+      // ✅ Optional: trigger any listeners
+      window.dispatchEvent(new Event('ticketUpdatedEvent'));
+  
+      return updatedTicket; // Return in case caller wants to use it
     } catch (err) {
       console.error(`Error updating ticket for ${ticketId}:`, err);
+      throw err;
     }
   };
+  
+  
 
   const handleViewDetails = (ticketId) => {
     setViewingTicketId(viewingTicketId === ticketId ? null : ticketId);
@@ -93,7 +113,9 @@ const AdminSupportTickets = () => {
     setEditFormData({
       resolvedBy: ticketToEdit.resolvedBy || '',
       resolutionDetails: ticketToEdit.resolutionDetails || '',
+ resolutionDetailsRequired: ticketToEdit.status === 'resolved' && ticketToEdit.readyForBilling,
       status: ticketToEdit.status,
+ readyForBilling: ticketToEdit.readyForBilling || false,
     });
   };
 
@@ -123,17 +145,45 @@ const AdminSupportTickets = () => {
 
   const getPriorityIcon = (priority) => {
     switch (priority) {
-      case 'high': return <AlertTriangle className="h-4 w-4" />;
-      case 'medium': return <Clock className="h-4 w-4" />;
-      case 'low': return <CheckCircle className="h-4 w-4" />;
+      case 'high': return <span className="text-red-600"><AlertTriangle className="h-4 w-4" /></span>;
+      case 'medium': return <span className="text-yellow-600"><Clock className="h-4 w-4" /></span>;
+      case 'low': return <span className="text-green-600"><CheckCircle className="h-4 w-4" /></span>;
+      // Adding icons for other potential priorities if needed
+      case 'critical': return <span className="text-purple-600"><AlertTriangle className="h-4 w-4" /></span>; // Example for a critical priority
+      case 'urgent': return <span className="text-orange-600"><AlertTriangle className="h-4 w-4" /></span>; // Example for an urgent priority
       default: return null;
     }
   };
+
+ const handleBillingReadyChange = async (ticketId, isChecked) => {
+ const ticketToUpdate = tickets.find(ticket => ticket._id === ticketId);
+
+ if (isChecked && ticketToUpdate.status === 'resolved') {
+ if (!ticketToUpdate.resolvedBy || !ticketToUpdate.resolutionDetails) {
+      alert('Please fill in "Resolved By" and "Resolution Details" before marking as Ready for Billing.');
+      // Prevent the checkbox from being checked visually
+      return;
+    }
+  }
+
+
+ const updatedFields = { readyForBilling: isChecked };
+
+ // Make resolutionDetails required if status is resolved and readyForBilling is checked
+ if (ticketToUpdate.status === 'resolved') {
+      updatedFields.resolutionDetailsRequired = isChecked;
+ }
+
+ await handleUpdateTicket(ticketId, updatedFields);
+  };
+
 
  return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Support Tickets</h1>
 
+      {/* Wrap filter section, table section, and no tickets message in a single parent div */}
+      <div>
       {editingTicketId && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -161,6 +211,7 @@ const AdminSupportTickets = () => {
                 rows="3"
                 value={editFormData.resolutionDetails}
                 onChange={(e) => setEditFormData({ ...editFormData, resolutionDetails: e.target.value })}
+ required={editFormData.resolutionDetailsRequired}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               ></textarea>
             </div>
@@ -227,22 +278,23 @@ const AdminSupportTickets = () => {
 
 
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+ <div className="bg-white rounded-lg shadow">
+          
+ <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resolved Date</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ready for Billing</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Ticket Number</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Client</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Company</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Description</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Priority</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Status</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Date</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Resolved Date</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Assigned To</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Ready for Billing</th>
                  </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -250,18 +302,19 @@ const AdminSupportTickets = () => {
                 <React.Fragment key={ticket._id}>
                   <tr className="hover:bg-gray-50">
                     <td className="px-3 py-4 text-sm font-medium text-gray-900">{ticket.subject}</td>
-                    <td className="px-3 py-4 text-sm text-gray-900">{ticket.clientId?.name || 'N/A'}</td>
-                    <td className="px-3 py-4 text-sm text-gray-900">{ticket.clientId?.company}</td>
-                    <td className="px-3 py-4 text-sm text-gray-500 max-w-xs">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 w-24">{ticket.ticketNumber}</td>
+                    <td className="px-3 py-4 text-sm text-gray-900 w-24">{ticket.clientId?.name || 'N/A'}</td>
+                    <td className="px-3 py-4 text-sm text-gray-900 w-24">{ticket.clientId?.company}</td>
+                    <td className="px-3 py-4 text-sm text-gray-500 w-48">
                       <div className="whitespace-pre-wrap">{ticket.description}</div>
                     </td>
                     <td className="px-3 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit ${getStatusColor(ticket.priority)}`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit`}>
                         {getPriorityIcon(ticket.priority)}
                         <span>{ticket.priority}</span>
                       </span>
                     </td>
-                    <td className="px-3 py-4 text-sm text-gray-500">
+                    <td className="px-3 py-4 text-sm text-gray-500 w-24">
                       <select
                         value={ticket.status}
                         onChange={(e) => {
@@ -275,31 +328,62 @@ const AdminSupportTickets = () => {
                         <option value="resolved">Resolved</option>
                       </select>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 w-24">
                       {new Date(ticket.date).toLocaleDateString()}
                     </td>
- <td className="px-6 py-4 text-sm text-gray-500">
+ <td className="px-6 py-4 text-sm text-gray-500 w-24">
                       {ticket.status === 'resolved' && ticket.resolvedDate
                         ? new Date(ticket.resolvedDate).toLocaleDateString() : '-'}
                     </td>
  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <select
- value={ticket.assignedTo?._id || ''}
-                        onChange={async (e) => {
-                          const newAssignedToId = e.target.value;
-                          await handleUpdateTicket(ticket._id, { assignedTo: newAssignedToId === '' ? null : newAssignedToId });
-                        }}
-                        className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      >
- <option value="">Unassigned</option>
- {admins.map(admin => (<option key={admin._id} value={admin._id}>{admin.name}</option>))}
- </select>
+ <select
+  value={ticket.assignedTo?._id || ''}
+  onChange={async (e) => {
+    const newAssignedToId = e.target.value;
+
+    const fallbackAdmin = admins.find(admin => admin._id === newAssignedToId) || null;
+
+    // Optimistically update
+    setTickets(prev =>
+      prev.map(t => {
+        // If the current ticket matches, update its assignedTo
+        if (t._id === ticket._id) {
+          return { ...t, assignedTo: fallbackAdmin };
+        }
+        return t;
+      })
+    );
+    try {
+      const updatedTicket = await handleUpdateTicket(ticket._id, {
+        assignedTo: newAssignedToId || null,
+      });
+
+      // Update state with the fallbackAdmin to immediately show the name
+      setTickets(prev =>
+        prev.map(t =>
+          t._id === ticket._id ? { ...t, assignedTo: fallbackAdmin } : t
+        ))
+    } catch (error) {
+      console.error('Failed to update assignment:', error);
+    }
+  }}
+>
+  <option value="">Unassigned</option>
+  {admins.map(admin => (
+    <option key={admin._id} value={admin._id}>
+      {admin.name}
+    </option>
+  ))}
+</select>
+
+
+
  </td>
  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleViewDetails(ticket._id)}
-                          className="text-blue-600 hover:text-blue-900"
+ className="text-blue-600 hover:text-blue-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           title="View Details"
                           disabled={editingTicketId !== null}
                         >
@@ -307,8 +391,9 @@ const AdminSupportTickets = () => {
                         </button>
                         <button
                           onClick={() => handleEditTicket(ticket._id)}
-                          className="text-green-600 hover:text-green-900"
+ className="text-green-600 hover:text-green-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Edit Ticket"
+ disabled={ticket.readyForBilling}
                         >
                           <Edit className="h-5 w-5" />
                         </button>
@@ -320,10 +405,8 @@ const AdminSupportTickets = () => {
                       <input
                         type="checkbox"
                         checked={ticket.readyForBilling || false}
-                        onChange={async (e) => { // Mark the handler as async
-                          await handleUpdateTicket(ticket._id, { readyForBilling: e.target.checked }); // Ensure update completes
-                          console.log('Ready for Billing checkbox toggled. New value:', e.target.checked);
-                        }}
+ onChange={(e) => handleBillingReadyChange(ticket._id, e.target.checked)}
+ disabled={ticket.readyForBilling}
                         className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
 
@@ -340,8 +423,8 @@ const AdminSupportTickets = () => {
                           {(ticket.resolvedBy || ticket.resolutionDetails) && (
                             <div>
                                <p className="text-sm font-medium text-gray-500 mb-1">Resolved By:</p>
- <p>{ticket.resolvedBy ? (admins.find(admin => admin._id === ticket.resolvedBy)?.name || 'Unknown Admin') : 'N/A'}</p>
-                              <p className="text-sm font-medium text-gray-500 mt-4 mb-1">Resolution Details:</p>
+ <p>{ticket.resolvedBy && admins && admins.length > 0 ? (admins.find(admin => admin._id === ticket.resolvedBy)?.name || 'Unknown Admin') : 'N/A'} (Raw: {JSON.stringify(ticket.resolvedBy)})</p>
+ <p className="text-sm font-medium text-gray-500 mt-4 mb-1">Resolution Details:</p>
                               <p className="whitespace-pre-wrap">{ticket.resolutionDetails || 'N/A'}</p>
                             </div>
                           )}
@@ -354,6 +437,7 @@ const AdminSupportTickets = () => {
             </tbody>
           </table>
         </div>
+        
         {filteredTickets.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500">No support tickets found.</p>

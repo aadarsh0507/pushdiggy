@@ -4,9 +4,10 @@ import api from '../api/api';
 import InvoiceTemplate from './InvoiceTemplate';
 import { useNavigate } from 'react-router-dom';
 
-const AdminBilling = () => {
+const AdminBilling = ({ onBillCreated }) => {
   const [resolvedTicketsReadyForBilling, setResolvedTicketsReadyForBilling] = useState([]);
   const [selectedTicketIds, setSelectedTicketIds] = useState([]);
+  const [clients, setClients] = useState([]);
   const [bills, setBills] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
   const [showBillModal, setShowBillModal] = useState(false);
@@ -18,8 +19,9 @@ const AdminBilling = () => {
   const [billForm, setBillForm] = useState({
     invoiceNumber: '',
     subject: '',
+    client: '', // This will remain empty for one-time customers
     billTo: { name: '', address: '', gstin: '' },
-    items: [{ description: '', amount: '' }],
+    items: [{ description: '', amount: '', quantity: 0 }],
     bankDetails: { accountName: '', accountNumber: '', ifscCode: '', bankName: '', branch: '' },
     subtotal: 0,
     sgst: 0,
@@ -40,15 +42,26 @@ const AdminBilling = () => {
     }
   };
 
+  const fetchClients = async () => {
+    try {
+      const res = await api.get('/clients');
+      setClients(res.data);
+    } catch (err) {
+      console.error('Error fetching clients:', err);
+    }
+  };
+
   useEffect(() => {
     fetchResolvedTickets();
+    fetchClients();
+
     const handleTicketUpdated = () => fetchResolvedTickets();
     window.addEventListener('ticketUpdatedEvent', handleTicketUpdated);
     return () => window.removeEventListener('ticketUpdatedEvent', handleTicketUpdated);
   }, []);
 
   useEffect(() => {
-    const subtotal = billForm.items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    const subtotal = billForm.items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0) * (parseFloat(item.quantity) || 0), 0);
     const sgstAmount = (subtotal * (parseFloat(billForm.sgstPercent) || 0)) / 100;
     const cgstAmount = (subtotal * (parseFloat(billForm.cgstPercent) || 0)) / 100;
     const grandTotal = subtotal + sgstAmount + cgstAmount;
@@ -85,7 +98,7 @@ const AdminBilling = () => {
     setBillForm(prev => ({ ...prev, items: newItems }));
   };
 
-  const handleAddItem = () => setBillForm(prev => ({ ...prev, items: [...prev.items, { description: '', amount: '' }] }));
+  const handleAddItem = () => setBillForm(prev => ({ ...prev, items: [...prev.items, { description: '', amount: '', quantity: 1 }] }));
 
   const handleRemoveItem = index => {
     const newItems = [...billForm.items];
@@ -98,9 +111,13 @@ const AdminBilling = () => {
     try {
       const res = await api.post('/billing/bills', {
         ...billForm,
+        sgst: parseFloat(billForm.sgst),
+        cgst: parseFloat(billForm.cgst),
         sgstPercent: parseFloat(billForm.sgstPercent),
         cgstPercent: parseFloat(billForm.cgstPercent),
+        client: billForm.client || undefined,
       });
+      onBillCreated();
       console.log('Bill created successfully:', res.data);
       setPreviewBillData({
         ...res.data,
@@ -114,8 +131,9 @@ const AdminBilling = () => {
       setBillForm({
         invoiceNumber: '',
         subject: '',
+        client: '',
         billTo: { name: '', address: '', gstin: '' },
-        items: [{ description: '', amount: '' }],
+        items: [{ description: '', amount: '', quantity: 1 }],
         bankDetails: { accountName: '', accountNumber: '', ifscCode: '', bankName: '', branch: '' },
         subtotal: 0,
         sgst: 0,
@@ -156,6 +174,7 @@ const AdminBilling = () => {
       items: selectedTickets.map(ticket => ({
         description: `Support Ticket: ${ticket.subject}`,
         amount: '0.00',
+        quantity: 1,
       })),
       ticketIds: selectedTicketIdsArray,
     }));
@@ -169,7 +188,26 @@ const AdminBilling = () => {
         <h2 className="text-2xl font-bold text-gray-900">Billing Management</h2>
         <div>
           <button onClick={fetchResolvedTickets} className="bg-gray-600 text-white px-3 py-1 rounded mr-2">Refresh</button>
-          <button onClick={() => { setEditingBill(null); setShowBillModal(true); }} className="bg-blue-600 text-white px-4 py-2 rounded-lg">Create New Bill</button>
+          <button onClick={() => {
+            setEditingBill(null);
+            setShowBillModal(true);
+            setBillForm({
+              invoiceNumber: '',
+              subject: '',
+              client: '',
+              billTo: { name: '', address: '', gstin: '' },
+              items: [{ description: '', amount: '', quantity: 1 }],
+              bankDetails: { accountName: '', accountNumber: '', ifscCode: '', bankName: '', branch: '' },
+              subtotal: 0,
+              sgst: 0,
+              cgst: 0,
+              sgstPercent: 0,
+              cgstPercent: 0,
+              grandTotal: 0,
+              date: '',
+              ticketIds: [],
+            });
+          }} className="bg-blue-600 text-white px-4 py-2 rounded-lg">Create New Bill</button>
         </div>
       </div>
 
@@ -225,7 +263,7 @@ const AdminBilling = () => {
                 &times;
               </button>
             </div>
-            <InvoiceTemplate billData={previewBillData} /> {/* Ensure prop is named billData */}
+            <InvoiceTemplate billData={previewBillData} />
           </div>
         </div>
       )}
@@ -253,9 +291,9 @@ const AdminBilling = () => {
 
               <div className="border-t pt-4">
                 <h4 className="font-semibold mb-2">Bill To</h4>
-                <input type="text" placeholder="Name" value={billForm.billTo.name} onChange={(e) => handleNestedFormChange('billTo', 'name', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-                <input type="text" placeholder="Address" value={billForm.billTo.address} onChange={(e) => handleNestedFormChange('billTo', 'address', e.target.value)} className="mt-2 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-                <input type="text" placeholder="GSTIN" value={billForm.billTo.gstin} onChange={(e) => handleNestedFormChange('billTo', 'gstin', e.target.value)} className="mt-2 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
+                <input type="text" name="billTo.name" placeholder="Name" value={billForm.billTo.name} onChange={(e) => handleNestedFormChange('billTo', 'name', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required />
+                <input type="text" name="billTo.address" placeholder="Address" value={billForm.billTo.address} onChange={(e) => handleNestedFormChange('billTo', 'address', e.target.value)} className="mt-2 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
+                <input type="text" name="billTo.gstin" placeholder="GSTIN" value={billForm.billTo.gstin} onChange={(e) => handleNestedFormChange('billTo', 'gstin', e.target.value)} className="mt-2 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
               </div>
 
               <div className="border-t pt-4">
@@ -263,6 +301,7 @@ const AdminBilling = () => {
                 {billForm.items.map((item, index) => (
                   <div key={index} className="flex space-x-2 mb-2">
                     <input type="text" value={item.description} onChange={(e) => handleItemChange(index, 'description', e.target.value)} placeholder="Description" className="flex-grow rounded-md border-gray-300 shadow-sm sm:text-sm" />
+                    <input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="Quantity" className="w-16 rounded-md border-gray-300 shadow-sm sm:text-sm" min="1" />
                     <input type="number" value={item.amount} onChange={(e) => handleItemChange(index, 'amount', e.target.value)} placeholder="Amount" className="w-24 rounded-md border-gray-300 shadow-sm sm:text-sm" />
                     {billForm.items.length > 1 && <button type="button" onClick={() => handleRemoveItem(index)} className="text-red-500"><Trash2 size={18} /></button>}
                   </div>
@@ -270,7 +309,6 @@ const AdminBilling = () => {
                 <button type="button" onClick={handleAddItem} className="text-blue-600 text-sm mt-2"><Plus size={16} className="inline" /> Add Item</button>
               </div>
 
-              {/* Bank Details Section */}
               <div className="border-t pt-4">
                 <h4 className="font-semibold mb-2">Bank Details</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

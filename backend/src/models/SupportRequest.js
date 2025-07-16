@@ -10,6 +10,11 @@ const supportRequestSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+ ticketNumber: {
+    type: String,
+    required: true,
+    unique: true,
+  },
 
   company: { type: String, required: true, trim: true },
   
