@@ -14,6 +14,7 @@ import ClientRegister from './pages/ClientRegister';
 import AdminRegister from './pages/AdminRegister';
 import AdminBilling from './components/AdminBilling';
 import PrintInvoicePage from './pages/PrintInvoicePage';
+import Splash from './components/Splash';
 
 
 function App() {
@@ -22,7 +23,8 @@ function App() {
       <Router>
         <div className="App">
           <Routes>
-            <Route path="/" element={<Layout><Home /></Layout>} />
+            <Route path="/" element={<Splash />} />
+            <Route path="/home" element={<Layout><Home /></Layout>} />
             <Route path="/about" element={<Layout><About /></Layout>} />
             <Route path="/services" element={<Layout><Services /></Layout>} />
             <Route path="/contact" element={<Layout><Contact /></Layout>} />

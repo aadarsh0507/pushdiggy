@@ -1,6 +1,16 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Cpu, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  Cpu,
+  Mail,
+  Phone,
+  MapPin,
+  Facebook,
+  Twitter,
+  Linkedin,
+  Instagram,
+} from "lucide-react";
+import logo from "../assets/logo/logo.png";
 
 const Footer = () => {
   return (
@@ -10,23 +20,44 @@ const Footer = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <Cpu className="h-8 w-8 text-blue-400" />
+                <img src={logo} alt="Push Diggy Logo" className="h-10 w-6" />
               <span className="text-xl font-bold">PUSH DIGGY</span>
             </div>
             <p className="text-gray-300 text-sm">
-              Leading IT services provider helping businesses transform through technology innovation and digital solutions.
+              Leading IT services provider helping businesses transform through
+              technology innovation and digital solutions.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
+            <div className="flex items-center space-x-4">
+              <a
+                href="https://www.facebook.com/PushDiggy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-blue-400 transition-colors duration-200"
+              >
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
+              <a
+                href="https://x.com/PushDiggy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-blue-400 transition-colors duration-200"
+              >
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
+              <a
+                href="https://www.linkedin.com/company/push-diggy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-blue-400 transition-colors duration-200"
+              >
                 <Linkedin className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors duration-200">
+              <a
+                href="https://www.instagram.com/pushdiggy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-blue-400 transition-colors duration-200"
+              >
                 <Instagram className="h-5 w-5" />
               </a>
             </div>
@@ -37,40 +68,52 @@ const Footer = () => {
             <h3 className="text-lg font-semibold">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/" className="text-gray-300 hover:text-white transition-colors duration-200">
+                <Link
+                  to="/"
+                  className="text-gray-300 hover:text-white transition-colors duration-200"
+                >
                   Home
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-gray-300 hover:text-white transition-colors duration-200">
+                <Link
+                  to="/about"
+                  className="text-gray-300 hover:text-white transition-colors duration-200"
+                >
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/services" className="text-gray-300 hover:text-white transition-colors duration-200">
+                <Link
+                  to="/services"
+                  className="text-gray-300 hover:text-white transition-colors duration-200"
+                >
                   Services
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-gray-300 hover:text-white transition-colors duration-200">
+                <Link
+                  to="/contact"
+                  className="text-gray-300 hover:text-white transition-colors duration-200"
+                >
                   Contact
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Services
+          {/* Services */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Services</h3>
             <ul className="space-y-2 text-gray-300">
-              <li>Cloud Infrastructure</li>
-              <li>Cybersecurity</li>
-              <li>Data Analytics</li>
-              <li>IT Consulting</li>
-              <li>Managed Services</li>
-              <li>Web Development</li>
+              <li>Web Design</li>
+              <li>Software Development</li>
+              <li>Digital Marketing</li>
+              <li>Sales and Services</li>
+              <li>Networking</li>
+              {/* <li></li> */}
             </ul>
-          </div> */}
+          </div>
 
           {/* Contact Info */}
           <div className="space-y-4">
@@ -82,11 +125,13 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-blue-400" />
-                <span className="text-gray-300 text-sm">+91 8608706864</span>
+                <span className="text-gray-300 text-sm">+91 86087-06864</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-blue-400" />
-                <span className="text-gray-300 text-sm">pushdiggy@gmail.com</span>
+                <span className="text-gray-300 text-sm">
+                  pushdiggy@gmail.com
+                </span>
               </div>
             </div>
           </div>

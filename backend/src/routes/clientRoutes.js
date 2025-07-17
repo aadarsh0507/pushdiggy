@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllClients, registerClient, loginClient, updateClientStatus, getClientById, updateClientGeneral } from '/home/user/pushdiggy/backend/src/controllers/clientController.js';
+import { getAllClients, registerClient, loginClient, updateClientStatus, getClientById, updateClientGeneral } from '../controllers/clientController.js';
 import Client from '../models/client.js';
 
 
