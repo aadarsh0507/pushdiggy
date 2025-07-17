@@ -11,7 +11,7 @@ const About = () => {
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">About PUSH DIGGY</h1>
             <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto">
-              Pioneering the future of technology with innovative solutions and exceptional service since 2009.
+              Pioneering the future of technology with innovative solutions and exceptional service since 2025.
             </p>
           </div>
         </div>
@@ -24,7 +24,7 @@ const About = () => {
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Our Story</h2>
               <p className="text-lg text-gray-600 mb-6">
-                Founded in 2009, PUSH DIGGY began as a small team of passionate technologists with a vision to help businesses harness the power of technology for growth and innovation.
+                Founded in 2025, PUSH DIGGY began as a small team of passionate technologists with a vision to help businesses harness the power of technology for growth and innovation.
               </p>
               <p className="text-lg text-gray-600 mb-6">
                 Over the years, we've evolved into a comprehensive IT services provider, serving over 500 clients across various industries. Our commitment to excellence and customer satisfaction has been the driving force behind our success.

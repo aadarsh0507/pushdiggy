@@ -634,7 +634,6 @@ const AdminDashboard = () => {
                     name="price"
                     value={serviceForm.price}
                     onChange={handleServiceFormChange}
-                    required
                     className="mt-1 block w-full border border-gray-300 rounded-md p-2"
                   />
                 </div>
