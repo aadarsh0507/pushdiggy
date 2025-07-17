@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle, Star, Users, Award, TrendingUp } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, CheckCircle, Star, Users, Award, TrendingUp, Camera, Printer, Globe, Smartphone, Briefcase } from 'lucide-react';
 import ConfettiSpray from "../components/ConfettiRain";
 import api from '../api/api';
 
 const Home = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Fetch services from backend
   useEffect(() => {
@@ -24,6 +25,92 @@ const Home = () => {
   }, []);
 
   const featuredServices = services.slice(0, 3);
+
+  // Service categories with icons and descriptions
+  const serviceCategories = [
+    {
+      name: 'Camera Services',
+      icon: Camera,
+      description: 'Professional camera installation and surveillance solutions',
+      color: 'from-purple-600 to-blue-600',
+      category: 'camera',
+      adminPath: '/admin/camera-services'
+    },
+    {
+      name: 'Printer Services',
+      icon: Printer,
+      description: 'Printer setup, maintenance, and support services',
+      color: 'from-orange-600 to-red-600',
+      category: 'printer',
+      adminPath: '/admin/printer-services'
+    },
+    {
+      name: 'Website Services',
+      icon: Globe,
+      description: 'Custom website development and web solutions',
+      color: 'from-green-600 to-teal-600',
+      category: 'website',
+      adminPath: '/admin/website-services'
+    },
+    {
+      name: 'Digital Marketing',
+      icon: TrendingUp,
+      description: 'Digital marketing and online promotion services',
+      color: 'from-pink-600 to-purple-600',
+      category: 'digital-marketing',
+      adminPath: '/admin/digital-marketing-services'
+    },
+    {
+      name: 'Mobile Apps',
+      icon: Smartphone,
+      description: 'Mobile application development services',
+      color: 'from-indigo-600 to-blue-600',
+      category: 'mobile-app',
+      adminPath: '/admin/mobile-app-services'
+    },
+    {
+      name: 'IT Consultation',
+      icon: Briefcase,
+      description: 'IT consulting and strategic technology solutions',
+      color: 'from-amber-600 to-orange-600',
+      category: 'it-consultation',
+      adminPath: '/admin/it-consultation-services'
+    }
+  ];
+
+  // Function to get icon based on service category
+  const getServiceIcon = (service) => {
+    const categoryMap = {
+      'camera': Camera,
+      'printer': Printer,
+      'website': Globe,
+      'digital-marketing': TrendingUp,
+      'mobile-app': Smartphone,
+      'it-consultation': Briefcase
+    };
+    
+    const IconComponent = categoryMap[service.category] || TrendingUp;
+    return <IconComponent className="h-8 w-8 text-white" />;
+  };
+
+  // Function to get gradient color based on service category
+  const getServiceColor = (service) => {
+    const colorMap = {
+      'camera': 'from-purple-600 to-blue-600',
+      'printer': 'from-orange-600 to-red-600',
+      'website': 'from-green-600 to-teal-600',
+      'digital-marketing': 'from-pink-600 to-purple-600',
+      'mobile-app': 'from-indigo-600 to-blue-600',
+      'it-consultation': 'from-amber-600 to-orange-600'
+    };
+    
+    return colorMap[service.category] || 'from-blue-600 to-purple-600';
+  };
+
+  // Handle service category card click - redirect to admin service page
+  const handleServiceCategoryClick = (adminPath) => {
+    navigate(adminPath);
+  };
 
   const testimonials = [
     {
@@ -90,8 +177,39 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Service Categories Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Our Service Categories
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Comprehensive IT solutions designed to accelerate your business growth and digital transformation.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {serviceCategories.map((category) => (
+              <button
+                key={category.name}
+                onClick={() => handleServiceCategoryClick(category.adminPath)}
+                className="flex flex-col items-center p-6 rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group bg-white shadow-lg hover:shadow-xl"
+              >
+                <div className={`w-16 h-16 bg-gradient-to-r ${category.color} rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  <category.icon className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">{category.name}</h3>
+                <p className="text-gray-600 text-center text-sm">{category.description}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Stats Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="text-center">
@@ -125,8 +243,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
       {/* Featured Services Section */}
-      <section className="py-20">
+      <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -150,8 +269,8 @@ const Home = () => {
                   className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow duration-300"
                 >
                   <div className="text-center">
-                    <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <div className="w-8 h-8 bg-blue-600 rounded"></div>
+                    <div className={`w-16 h-16 bg-gradient-to-r ${getServiceColor(service)} rounded-full flex items-center justify-center mx-auto mb-6`}>
+                      {getServiceIcon(service)}
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-4">
                       {service.name}
@@ -195,8 +314,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
       {/* Why Choose Us */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -248,8 +368,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
       {/* Testimonials */}
-      <section className="py-20">
+      <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -298,6 +419,7 @@ const Home = () => {
           </div>
         </div>
       </section>
+
       {/* CTA Section */}
       <section className="bg-blue-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

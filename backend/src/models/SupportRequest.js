@@ -58,6 +58,18 @@ const supportRequestSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  // Admin-specific billing fields
+  billingReadyBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin',
+  },
+  billingReadyAt: {
+    type: Date,
+  },
+  isBillingReady: {
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true });
 
 const SupportRequest = mongoose.model('SupportRequest', supportRequestSchema);

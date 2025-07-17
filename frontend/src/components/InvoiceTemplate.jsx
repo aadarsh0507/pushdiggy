@@ -28,37 +28,89 @@ const InvoiceTemplate = ({ billData }) => {
 
   const printStyles = `
     @media print {
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
       html, body {
         margin: 0 !important;
         padding: 0 !important;
+        width: 210mm;
+        height: 297mm;
       }
       #invoice-content-to-print {
-        padding: 10mm !important;
+        width: 210mm !important;
         margin: 0 !important;
+        padding: 10mm !important;
+        box-sizing: border-box !important;
+        background: white !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+      .print-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      .print-table td {
+        vertical-align: top !important;
+        padding: 0 !important;
+        border: none !important;
       }
       .print-header {
         display: table-header-group !important;
-      }
-      .print-layout-table, .print-layout-table tr, .print-layout-table td {
-        border: none !important;
-        padding: 0 !important;
-      }
-      .invoice-table tr, .footer {
+        page-break-after: avoid !important;
         page-break-inside: avoid !important;
+      }
+      .print-content {
+        display: table-row-group !important;
+      }
+      .print-content td {
+        page-break-inside: auto !important;
+      }
+      .invoice-table {
+        page-break-inside: auto !important;
+      }
+      .invoice-table tr {
+        page-break-inside: avoid !important;
+      }
+      .footer {
+        page-break-inside: avoid !important;
+        page-break-before: auto !important;
       }
       .no-print {
         display: none !important;
+      }
+      .invoice-table {
+        font-size: 10px !important;
+      }
+      .invoice-table th, .invoice-table td {
+        padding: 6px 8px !important;
+      }
+      .summary-section {
+        font-size: 11px !important;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
       }
     }
   `;
 
   return (
     <div
-      className="bg-white p-8 rounded-lg shadow-xl w-[210mm] mx-auto my-8"
+      className="bg-white p-8 rounded-lg shadow-xl mx-auto my-8"
+      style={{
+        width: '210mm',
+        minHeight: '297mm',
+        padding: '10mm',
+        boxSizing: 'border-box',
+        backgroundColor: 'white'
+      }}
       id="invoice-content-to-print"
     >
       <style>{printStyles}</style>
-      <table className="print-layout-table" style={{ width: '100%' }}>
+      
+      <table className="print-table" style={{ minHeight: '277mm' }}>
         <thead className="print-header">
           <tr>
             <td>
@@ -70,7 +122,7 @@ const InvoiceTemplate = ({ billData }) => {
                     <p className="text-sm text-gray-600"><span style={{ color: '#2C3E50' }}>Solutions</span></p>
                   </div>
                 </div>
-                <div>
+                <div style={{ textAlign: 'right' }}>
                   <div>Acharapakkam</div>
                   <div><strong>Mobile: </strong>9150690961</div>
                   <div><strong>Email:</strong> pushdiggy@gmail.com</div>
@@ -80,57 +132,63 @@ const InvoiceTemplate = ({ billData }) => {
             </td>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="print-content">
           <tr>
-            <td>
+            <td style={{ verticalAlign: 'top', height: '100%' }}>
               {/* Main Content */}
-              <div className="flex justify-between items-start mt-6">
-                <div className="w-1/2">
-                  <p className="text-sm font-semibold text-gray-800">Date: {formatDate(billData.date)}</p>
-                  <p className="text-sm font-semibold text-gray-800 mt-1">Invoice No: INV-PDS-{billData.invoiceNumber}</p>
+              <div style={{ minHeight: '180mm', display: 'flex', flexDirection: 'column' }}>
+                <div className="flex justify-between items-start mt-6">
+                  <div className="w-1/2">
+                    <p className="text-sm font-semibold text-gray-800">Date: {formatDate(billData.date)}</p>
+                    <p className="text-sm font-semibold text-gray-800 mt-1">Invoice No: INV-PDS-{billData.invoiceNumber}</p>
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-3xl font-bold text-gray-800 leading-none">INVOICE</h3>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <h3 className="text-3xl font-bold text-gray-800 leading-none">INVOICE</h3>
+                <div className="mt-8 border-b pb-6 border-gray-200">
+                  <p className="text-base font-semibold text-gray-800">To</p>
+                  <p className="text-sm text-gray-700 mt-2">{billData.billTo?.name}</p>
+                  <p className="text-sm text-gray-700 mt-1">{billData.billTo?.address}</p>
+                  <p className="text-sm text-gray-700 mt-1">GSTIN: {billData.billTo?.gstin}</p>
                 </div>
-              </div>
-              <div className="mt-8 border-b pb-6 border-gray-200">
-                <p className="text-base font-semibold text-gray-800">To</p>
-                <p className="text-sm text-gray-700 mt-2">{billData.billTo?.name}</p>
-                <p className="text-sm text-gray-700 mt-1">{billData.billTo?.address}</p>
-                <p className="text-sm text-gray-700 mt-1">GSTIN: {billData.billTo?.gstin}</p>
-              </div>
-              <div className="mt-8">
-                <p className="text-sm font-semibold text-gray-800">Subject: {billData.subject || "N/A"}</p>
-              </div>
-              <div className="mt-8 border border-gray-300 rounded-lg overflow-hidden">
-                <table className="min-w-full bg-white invoice-table">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-300">S.NO</th>
-                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-300">Description</th>
-                      <th className="py-3 px-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-300">Quantity</th>
-                      <th className="py-3 px-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-300">Amount (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {billData.items?.map((item, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="py-3 px-4 text-sm text-gray-700 border-b border-gray-200">{index + 1}</td>
-                        <td className="py-3 px-4 text-sm text-gray-700 border-b border-gray-200">{item.description}</td>
-                        <td className="py-3 px-4 text-sm text-gray-700 text-center border-b border-gray-200">{item.quantity}</td>
-                        <td className="py-3 px-4 text-sm text-gray-700 text-right border-b border-gray-200">₹{parseFloat(item.amount || 0).toFixed(2)}</td>
+                <div className="mt-8">
+                  <p className="text-sm font-semibold text-gray-800">Subject: {billData.subject || "N/A"}</p>
+                </div>
+                <div className="mt-8 border border-gray-300 rounded-lg overflow-hidden">
+                  <table className="min-w-full bg-white invoice-table">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-300">S.NO</th>
+                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-300">Description</th>
+                        <th className="py-3 px-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-300">Quantity</th>
+                        <th className="py-3 px-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-300">Amount (₹)</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="p-4 bg-gray-50 text-right text-sm text-gray-700 space-y-1">
-                  <p>SGST ({billData.sgstPercent || 0}%): ₹{parseFloat(billData.sgst || 0).toFixed(2)}</p>
-                  <p>CGST ({billData.cgstPercent || 0}%): ₹{parseFloat(billData.cgst || 0).toFixed(2)}</p>
-                  <p className="text-xl font-bold text-gray-800 pt-2">Grand Total: ₹{parseFloat(billData.grandTotal || 0).toFixed(2)}</p>
+                    </thead>
+                    <tbody>
+                      {billData.items?.map((item, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="py-3 px-4 text-sm text-gray-700 border-b border-gray-200">{index + 1}</td>
+                          <td className="py-3 px-4 text-sm text-gray-700 border-b border-gray-200">{item.description}</td>
+                          <td className="py-3 px-4 text-sm text-gray-700 text-center border-b border-gray-200">{item.quantity}</td>
+                          <td className="py-3 px-4 text-sm text-gray-700 text-right border-b border-gray-200">₹{parseFloat(item.amount || 0).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="p-4 bg-gray-50 text-right text-sm text-gray-700 space-y-1">
+                    <p>SGST ({billData.sgstPercent || 0}%): ₹{parseFloat(billData.sgst || 0).toFixed(2)}</p>
+                    <p>CGST ({billData.cgstPercent || 0}%): ₹{parseFloat(billData.cgst || 0).toFixed(2)}</p>
+                    <p className="text-xl font-bold text-gray-800 pt-2">Grand Total: ₹{parseFloat(billData.grandTotal || 0).toFixed(2)}</p>
+                  </div>
                 </div>
+                
+                {/* Spacer to push footer down */}
+                <div style={{ flex: 1, minHeight: '40mm' }}></div>
               </div>
+              
               {/* FOOTER */}
-              <div className="flex justify-between items-center mt-8 footer">
+              <div className="flex justify-between items-start mt-8 footer">
                 <div className="text-sm text-gray-700 w-1/2 pr-4">
                   <strong>
                     <h4 className="font-semibold text-gray-800 mb-2">Bank Transfer Details</h4>
@@ -141,15 +199,18 @@ const InvoiceTemplate = ({ billData }) => {
                     <p>Branch: {billData.bankDetails?.branch}</p>
                   </strong>
                 </div>
-                <div className="text-center text-sm text-gray-700 w-full pl-4 flex flex-col items-center justify-center">
-                  <p>For PD Solutions</p>
-                  <p style={{ marginTop: '0px' }}>Authorized Signature</p>
+                <div className="text-center text-sm text-gray-700 w-1/2 pl-4 flex flex-col items-center justify-center">
+                  <div style={{ marginTop: '20px' }}>
+                    <p>For PD Solutions</p>
+                    <p style={{ marginTop: '40px' }}>Authorized Signature</p>
+                  </div>
                 </div>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
+      
       <div className="text-center mt-8 no-print">
         <button
           onClick={handleDownload}

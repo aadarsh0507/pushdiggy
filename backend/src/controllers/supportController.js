@@ -1,6 +1,7 @@
 import SupportRequest from '../models/SupportRequest.js';
 import mongoose from 'mongoose';
 import SupportTicketCounter from '../models/SupportTicketCounter.js';
+import Admin from '../models/admin.js';
 
 // Create a new support request
 export const createSupportRequest = async (req, res) => {
@@ -41,7 +42,7 @@ export const getSupportRequestsByClientId = async (req, res) => {
     try {
       const objectIdClientId = new mongoose.Types.ObjectId(clientId);
       console.log('Attempting to find tickets with clientId as ObjectId:', objectIdClientId);
-      requests = await SupportRequest.find({ clientId: objectIdClientId }).populate('assignedTo'); // Explicitly use ObjectId
+      requests = await SupportRequest.find({ clientId: objectIdClientId }).populate('assignedTo').populate('billingReadyBy'); // Explicitly use ObjectId
       console.log('Found requests for client ID:', requests);
     } catch (mongooseError) {
       console.error('Mongoose find error:', mongooseError); // Log Mongoose-specific errors
@@ -69,7 +70,7 @@ export const getAllSupportRequests = async (req, res) => {
       filter.status = req.query.status;
     }
 
-    const requests = await SupportRequest.find(filter).populate('clientId').populate('assignedTo');
+    const requests = await SupportRequest.find(filter).populate('clientId').populate('assignedTo').populate('billingReadyBy');
     res.status(200).json(requests);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -126,6 +127,72 @@ export const updateSupportRequestStatus = async (req, res) => {
     return res.status(200).json(updatedRequest);
   } catch (error) {
     console.error('Update error:', error); // Log the full error object
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Toggle billing ready status for a specific admin
+export const toggleBillingReadyStatus = async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    const { adminId } = req.body;
+
+    console.log('Toggle billing ready request received');
+    console.log('Params:', req.params);
+    console.log('Body:', req.body);
+    console.log('Extracted values:', { ticketId, adminId });
+
+    // Validate adminId
+    if (!adminId) {
+      return res.status(400).json({ message: 'Admin ID is required' });
+    }
+
+    // Verify admin exists
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    // Find the ticket
+    const ticket = await SupportRequest.findById(ticketId);
+    if (!ticket) {
+      return res.status(404).json({ message: 'Support ticket not found' });
+    }
+
+    // Check if this admin has already marked it as billing ready
+    const isCurrentlyReady = ticket.billingReadyBy && ticket.billingReadyBy.toString() === adminId;
+
+    let updateFields = {};
+
+    if (isCurrentlyReady) {
+      // Admin is unmarking it as billing ready
+      updateFields = {
+        billingReadyBy: null,
+        billingReadyAt: null,
+        isBillingReady: false
+      };
+    } else {
+      // Admin is marking it as billing ready
+      updateFields = {
+        billingReadyBy: adminId,
+        billingReadyAt: new Date(),
+        isBillingReady: true
+      };
+    }
+
+    console.log('Updating ticket with fields:', updateFields);
+
+    const updatedTicket = await SupportRequest.findByIdAndUpdate(
+      ticketId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    ).populate('clientId').populate('assignedTo').populate('billingReadyBy');
+
+    console.log('Updated ticket:', updatedTicket);
+
+    res.status(200).json(updatedTicket);
+  } catch (error) {
+    console.error('Toggle billing ready error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

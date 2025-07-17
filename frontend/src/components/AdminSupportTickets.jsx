@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/api';
 import { CheckCircle, Clock, AlertTriangle, Eye, Edit, Save, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const AdminSupportTickets = () => {
   const [tickets, setTickets] = useState([]);
@@ -9,6 +10,7 @@ const AdminSupportTickets = () => {
   const [assignedTo, setAssignedTo] = useState({});
   const [clients, setClients] = useState([]);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [editingTicketId, setEditingTicketId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
@@ -156,6 +158,13 @@ const AdminSupportTickets = () => {
   };
 
  const handleBillingReadyChange = async (ticketId, isChecked) => {
+ // Check if user exists and has an id
+ if (!user || !user.id) {
+   console.error('User not found or missing id:', user);
+   alert('User authentication error. Please log in again.');
+   return;
+ }
+
  const ticketToUpdate = tickets.find(ticket => ticket._id === ticketId);
 
  if (isChecked && ticketToUpdate.status === 'resolved') {
@@ -166,16 +175,37 @@ const AdminSupportTickets = () => {
     }
   }
 
+ try {
+   console.log('Sending request with:', { ticketId, adminId: user.id });
+   const response = await api.put(`/support-requests/${ticketId}/toggle-billing-ready`, {
+     adminId: user.id
+   });
 
- const updatedFields = { readyForBilling: isChecked };
+   console.log('Response received:', response.data);
 
- // Make resolutionDetails required if status is resolved and readyForBilling is checked
- if (ticketToUpdate.status === 'resolved') {
-      updatedFields.resolutionDetailsRequired = isChecked;
+   // Update the ticket in state with the new data
+   setTickets(prevTickets =>
+     prevTickets.map(ticket =>
+       ticket._id === ticketId ? response.data : ticket
+     )
+   );
+ } catch (error) {
+   console.error('Error toggling billing ready status:', error);
+   console.error('Error response:', error.response?.data);
+   console.error('Error status:', error.response?.status);
+   alert(`Failed to update billing ready status: ${error.response?.data?.message || error.message}`);
  }
+ };
 
- await handleUpdateTicket(ticketId, updatedFields);
-  };
+ // Helper function to check if current admin has marked this ticket as billing ready
+ const isBillingReadyByCurrentAdmin = (ticket) => {
+   return ticket.billingReadyBy && ticket.billingReadyBy._id === user.id;
+ };
+
+ // Helper function to check if any admin has marked this ticket as billing ready
+ const isBillingReadyByAnyAdmin = (ticket) => {
+   return ticket.billingReadyBy !== null && ticket.billingReadyBy !== undefined;
+ };
 
 
  return (
@@ -393,7 +423,7 @@ const AdminSupportTickets = () => {
                           onClick={() => handleEditTicket(ticket._id)}
  className="text-green-600 hover:text-green-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Edit Ticket"
- disabled={ticket.readyForBilling}
+ disabled={isBillingReadyByCurrentAdmin(ticket)}
                         >
                           <Edit className="h-5 w-5" />
                         </button>
@@ -401,15 +431,24 @@ const AdminSupportTickets = () => {
 
                     </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <input
-                        type="checkbox"
-                        checked={ticket.readyForBilling || false}
- onChange={(e) => handleBillingReadyChange(ticket._id, e.target.checked)}
- disabled={ticket.readyForBilling}
-                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-
+                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex flex-col items-center space-y-1">
+                        <input
+                          type="checkbox"
+                          checked={isBillingReadyByCurrentAdmin(ticket) || false}
+                          onChange={(e) => handleBillingReadyChange(ticket._id, e.target.checked)}
+                          disabled={isBillingReadyByCurrentAdmin(ticket)}
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        {isBillingReadyByAnyAdmin(ticket) && (
+                          <div className="text-xs text-gray-500">
+                            <div>Ready by: {ticket.billingReadyBy?.name || 'Unknown'}</div>
+                            {ticket.billingReadyAt && (
+                              <div>{new Date(ticket.billingReadyAt).toLocaleDateString()}</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                   {viewingTicketId === ticket._id && (

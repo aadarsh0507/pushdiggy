@@ -1,6 +1,7 @@
 import Bill from '../models/Bill.js';
 import Counter from '../models/Counter.js';
 import SupportRequest from '../models/SupportRequest.js';
+import Admin from '../models/admin.js';
 
 import pdfMake from 'pdfmake/build/pdfmake.js';
 import pdfFonts from 'pdfmake/build/vfs_fonts.js';
@@ -153,7 +154,9 @@ export const downloadInvoicePdf = async (req, res) => {
 
 export const getAllBills = async (req, res) => {
   try {
-    const bills = await Bill.find({}).populate('client', 'name address gstin'); // Populate the 'client' field, selecting only name, address, and gstin
+    const bills = await Bill.find({})
+      .populate('client', 'name address gstin')
+      .populate('completedBy', 'name email'); // Populate the 'completedBy' field
     res.status(200).json(bills);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -221,6 +224,53 @@ export const getBillsByClientId = async (req, res) => {
     const bills = await Bill.find({ client: clientId }).populate('client', 'name address gstin');
     res.status(200).json(bills);
   } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const toggleBillCompletion = async (req, res) => {
+  try {
+    const { billId } = req.params;
+    const { adminId, isCompleted } = req.body;
+
+    console.log('Toggle bill completion request:', { billId, adminId, isCompleted });
+
+    // Verify admin exists if we're marking as completed
+    if (isCompleted && adminId) {
+      const admin = await Admin.findById(adminId);
+      if (!admin) {
+        console.log('Admin not found:', adminId);
+        return res.status(404).json({ message: 'Admin not found' });
+      }
+      console.log('Admin found:', admin.name);
+    }
+
+    const updateData = {
+      isCompleted: isCompleted,
+      completedBy: isCompleted ? adminId : null,
+      completedAt: isCompleted ? new Date() : null,
+    };
+
+    console.log('Update data:', updateData);
+
+    const updatedBill = await Bill.findByIdAndUpdate(
+      billId,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('client', 'name address gstin').populate('completedBy', 'name email');
+
+    if (!updatedBill) {
+      console.log('Bill not found:', billId);
+      return res.status(404).json({ message: 'Bill not found' });
+    }
+
+    console.log('Updated bill:', updatedBill);
+    res.status(200).json(updatedBill);
+  } catch (error) {
+    console.error('Error in toggleBillCompletion:', error);
+    if (error.kind === 'ObjectId') {
+      return res.status(400).json({ message: 'Invalid Bill ID format' });
+    }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

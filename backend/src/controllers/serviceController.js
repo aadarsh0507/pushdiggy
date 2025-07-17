@@ -2,7 +2,14 @@ import { Service } from '../models/Service.js'; // Assuming default export
 
 export const getAllServices = async (req, res) => {
   try {
-    const services = await Service.find();
+    const { category } = req.query;
+    let query = {};
+    
+    if (category) {
+      query.category = category;
+    }
+    
+    const services = await Service.find(query);
     res.json(services);
   } catch (error) {
     res.status(500).json({ message: "Server error.", error: error.message });

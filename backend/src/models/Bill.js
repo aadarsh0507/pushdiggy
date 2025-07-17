@@ -94,6 +94,18 @@ const billSchema = new mongoose.Schema({
     enum: ['draft', 'sent', 'paid'],
     default: 'sent',
   },
+  // Admin-specific tracking
+  completedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin',
+  },
+  completedAt: {
+    type: Date,
+  },
+  isCompleted: {
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true });
 
 console.log('Bill model loaded. Schema:', billSchema.obj);

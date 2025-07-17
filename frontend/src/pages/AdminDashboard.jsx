@@ -1,6 +1,7 @@
 // Admin Dashboard Component
 import React, { useState, useEffect } from 'react';
-import { Users, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, CheckCircle, Clock, AlertTriangle, ToggleLeft, ToggleRight, CreditCard } from 'lucide-react';
+import { Users, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, CheckCircle, Clock, AlertTriangle, ToggleLeft, ToggleRight, CreditCard, Camera, Printer, Globe, TrendingUp, Smartphone, Briefcase } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
 // Import the new components (will be created next)
 import AdminSupportTickets from '../components/AdminSupportTickets';
 import AdminBilling from '../components/AdminBilling';
@@ -8,6 +9,7 @@ import AdminBills from '../components/AdminBills'; // Import the new AdminBills 
 import api from '../api/api';
 
 const AdminDashboard = () => {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [services, setServices] = useState([]);
   const [clients, setClients] = useState([]);
@@ -80,6 +82,14 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchBills();
   }, []); // Fetch when component mounts
+
+  // Check for tab parameter in URL and set active tab
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['overview', 'clients', 'services', 'messages', 'support', 'billing', 'bills'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const stats = {
     totalClients: clients.length,
@@ -551,6 +561,72 @@ const AdminDashboard = () => {
           Add Service
         </button>
       </div>
+
+      {/* Service Category Icons */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Service Categories</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <Link
+            to="/admin/camera-services"
+            className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition-all duration-300 group"
+          >
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <Camera className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-sm font-medium text-gray-700 text-center">Camera Services</span>
+          </Link>
+
+          <Link
+            to="/admin/printer-services"
+            className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-orange-500 hover:bg-orange-50 transition-all duration-300 group"
+          >
+            <div className="w-12 h-12 bg-gradient-to-r from-orange-600 to-red-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <Printer className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-sm font-medium text-gray-700 text-center">Printer Services</span>
+          </Link>
+
+          <Link
+            to="/admin/website-services"
+            className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all duration-300 group"
+          >
+            <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-teal-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <Globe className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-sm font-medium text-gray-700 text-center">Website Services</span>
+          </Link>
+
+          <Link
+            to="/admin/digital-marketing-services"
+            className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-pink-500 hover:bg-pink-50 transition-all duration-300 group"
+          >
+            <div className="w-12 h-12 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <TrendingUp className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-sm font-medium text-gray-700 text-center">Digital Marketing</span>
+          </Link>
+
+          <Link
+            to="/admin/mobile-app-services"
+            className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-300 group"
+          >
+            <div className="w-12 h-12 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <Smartphone className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-sm font-medium text-gray-700 text-center">Mobile Apps</span>
+          </Link>
+
+          <Link
+            to="/admin/it-consultation-services"
+            className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-amber-500 hover:bg-amber-50 transition-all duration-300 group"
+          >
+            <div className="w-12 h-12 bg-gradient-to-r from-amber-600 to-orange-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <Briefcase className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-sm font-medium text-gray-700 text-center">IT Consultation</span>
+          </Link>
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map((service) => (
@@ -705,7 +781,7 @@ const AdminDashboard = () => {
   // Render the Bills section (using the new component)
   const renderBills = () => {
     // Pass the fetched bills data to the AdminBills component
-    return <AdminBills bills={bills} clients={clients} />;
+    return <AdminBills bills={bills} clients={clients} setBills={setBills} />;
   };
 
 

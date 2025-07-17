@@ -15,6 +15,12 @@ import AdminRegister from './pages/AdminRegister';
 import AdminBilling from './components/AdminBilling';
 import PrintInvoicePage from './pages/PrintInvoicePage';
 import Splash from './pages/Splash';
+import CameraServices from './pages/CameraServices';
+import PrinterServices from './pages/PrinterServices';
+import WebsiteServices from './pages/WebsiteServices';
+import DigitalMarketingServices from './pages/DigitalMarketingServices';
+import MobileAppServices from './pages/MobileAppServices';
+import ITConsultationServices from './pages/ITConsultationServices';
 
 
 function App() {
@@ -61,6 +67,69 @@ function App() {
               } 
             />
             <Route path="/print-invoice/:invoiceId" element={<PrintInvoicePage />} />
+            
+            {/* Service Category Routes */}
+            <Route
+              path="/admin/camera-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout>
+                    <CameraServices />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/printer-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout>
+                    <PrinterServices />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/website-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout>
+                    <WebsiteServices />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/digital-marketing-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout>
+                    <DigitalMarketingServices />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/mobile-app-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout>
+                    <MobileAppServices />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/it-consultation-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout>
+                    <ITConsultationServices />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Star, Filter } from 'lucide-react';
+import { CheckCircle, Star, Filter, Camera, Printer, Globe, TrendingUp, Smartphone, Briefcase } from 'lucide-react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../api/api';
 
 const Services = () => {
   const [services, setServices] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Fetch services from backend
   useEffect(() => {
@@ -19,6 +22,16 @@ const Services = () => {
     };
     fetchServices();
   }, []);
+
+  // Handle URL parameters for category filtering
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category');
+    if (categoryFromUrl) {
+      setSelectedCategory(categoryFromUrl);
+    } else {
+      setSelectedCategory('All');
+    }
+  }, [searchParams]);
 
   const categories = ['All', ...new Set(services.map(service => service.category || 'Other'))];
 
@@ -38,6 +51,84 @@ const Services = () => {
     return iconMap[iconName] || '🔧';
   };
 
+  // Service categories with icons and descriptions
+  const serviceCategories = [
+    {
+      name: 'Camera Services',
+      icon: Camera,
+      description: 'Professional camera installation and surveillance solutions',
+      color: 'from-purple-600 to-blue-600',
+      hoverColor: 'hover:border-purple-500 hover:bg-purple-50',
+      category: 'camera',
+      adminPath: '/admin/camera-services'
+    },
+    {
+      name: 'Printer Services',
+      icon: Printer,
+      description: 'Printer setup, maintenance, and support services',
+      color: 'from-orange-600 to-red-600',
+      hoverColor: 'hover:border-orange-500 hover:bg-orange-50',
+      category: 'printer',
+      adminPath: '/admin/printer-services'
+    },
+    {
+      name: 'Website Services',
+      icon: Globe,
+      description: 'Custom website development and web solutions',
+      color: 'from-green-600 to-teal-600',
+      hoverColor: 'hover:border-green-500 hover:bg-green-50',
+      category: 'website',
+      adminPath: '/admin/website-services'
+    },
+    {
+      name: 'Digital Marketing',
+      icon: TrendingUp,
+      description: 'Digital marketing and online promotion services',
+      color: 'from-pink-600 to-purple-600',
+      hoverColor: 'hover:border-pink-500 hover:bg-pink-50',
+      category: 'digital-marketing',
+      adminPath: '/admin/digital-marketing-services'
+    },
+    {
+      name: 'Mobile Apps',
+      icon: Smartphone,
+      description: 'Mobile application development services',
+      color: 'from-indigo-600 to-blue-600',
+      hoverColor: 'hover:border-indigo-500 hover:bg-indigo-50',
+      category: 'mobile-app',
+      adminPath: '/admin/mobile-app-services'
+    },
+    {
+      name: 'IT Consultation',
+      icon: Briefcase,
+      description: 'IT consulting and strategic technology solutions',
+      color: 'from-amber-600 to-orange-600',
+      hoverColor: 'hover:border-amber-500 hover:bg-amber-50',
+      category: 'it-consultation',
+      adminPath: '/admin/it-consultation-services'
+    }
+  ];
+
+  // Handle category selection
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    if (category === 'All') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ category });
+    }
+  };
+
+  // Handle service category card click - redirect to admin service page
+  const handleServiceCategoryClick = (category) => {
+    // Find the category object
+    const categoryObj = serviceCategories.find(cat => cat.category === category);
+    if (categoryObj) {
+      // Redirect to the admin service page
+      navigate(categoryObj.adminPath);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -52,14 +143,44 @@ const Services = () => {
         </div>
       </section>
 
+      {/* Service Categories Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Explore Our Service Categories
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Choose from our comprehensive range of IT services tailored to meet your business needs.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {serviceCategories.map((category) => (
+              <button
+                key={category.name}
+                onClick={() => handleServiceCategoryClick(category.category)}
+                className="flex flex-col items-center p-6 rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group bg-white shadow-lg hover:shadow-xl"
+              >
+                <div className={`w-16 h-16 bg-gradient-to-r ${category.color} rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  <category.icon className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">{category.name}</h3>
+                <p className="text-gray-600 text-center text-sm">{category.description}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Services Section */}
-      <section className="py-20">
+      <section id="services-section" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Filter Section */}
           <div className="mb-12">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-0">
-                Choose Your Solution
+                {selectedCategory === 'All' ? 'All Services' : `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Services`}
               </h2>
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -75,7 +196,7 @@ const Services = () => {
               {categories.map((category) => (
                 <button
                   key={category}
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => handleCategorySelect(category)}
                   className={`px-6 py-2 rounded-full font-medium transition-colors duration-200 ${
                     selectedCategory === category
                       ? 'bg-blue-600 text-white'
@@ -94,7 +215,7 @@ const Services = () => {
                   <button
                     key={category}
                     onClick={() => {
-                      setSelectedCategory(category);
+                      handleCategorySelect(category);
                       setShowFilters(false);
                     }}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
@@ -151,6 +272,12 @@ const Services = () => {
           {filteredServices.length === 0 && (
             <div className="text-center py-12">
               <p className="text-xl text-gray-600">No services found for the selected category.</p>
+              <button
+                onClick={() => handleCategorySelect('All')}
+                className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300"
+              >
+                View All Services
+              </button>
             </div>
           )}
         </div>

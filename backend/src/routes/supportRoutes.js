@@ -1,5 +1,5 @@
 import express from 'express';
-import { createSupportRequest, getSupportRequestsByClientId, getAllSupportRequests, updateSupportRequestStatus } from '../controllers/supportController.js';
+import { createSupportRequest, getSupportRequestsByClientId, getAllSupportRequests, updateSupportRequestStatus, toggleBillingReadyStatus } from '../controllers/supportController.js';
 
 const router = express.Router();
 
@@ -10,6 +10,7 @@ router.get('/all', (req, res, next) => {
   console.log('GET request to /api/support-requests/all received by support router');
   next(); // Pass control to the next handler (getAllSupportRequests)
 }, getAllSupportRequests); // For admin to get all support requests
+router.put('/:ticketId/toggle-billing-ready', toggleBillingReadyStatus);
 router.put('/:id', updateSupportRequestStatus);
 
 export default router;

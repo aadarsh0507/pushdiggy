@@ -33,7 +33,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2" onClick={closeMenu}>
-           <img src={logo} alt="Push Diggy Logo" className="h-10 w-6" />
+           <img src={logo} alt="Push Diggy Logo" className="h-8 w-5" />
             <span className="text-xl font-bold text-gray-900">PUSH DIGGY</span>
           </Link>
 
