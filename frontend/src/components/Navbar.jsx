@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Cpu, LogOut, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import logo from "../assets/logo/logo.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,7 +33,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2" onClick={closeMenu}>
-            <Cpu className="h-8 w-8 text-blue-600" />
+           <img src={logo} alt="Push Diggy Logo" className="h-10 w-6" />
             <span className="text-xl font-bold text-gray-900">PUSH DIGGY</span>
           </Link>
 

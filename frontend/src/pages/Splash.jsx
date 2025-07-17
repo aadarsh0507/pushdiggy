@@ -17,7 +17,7 @@ const Splash = () => {
   return (
     <div className="flex items-center justify-center h-screen bg-white">
       <img
-        src={logo}
+              src={logo}// 👈 replace with your real logo file
         alt="Company Logo"
         className="w-30 h-60 animate-ping-slow"
       />
