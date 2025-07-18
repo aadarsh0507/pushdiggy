@@ -31,5 +31,18 @@ const getContactMessages = async (req, res) => {
   }
 };
 
+const deleteContactMessage = async (req, res) => {
+    try {
+        const message = await Contact.findById(req.params.id);
+        if (!message) {
+            return res.status(404).json({ message: 'Message not found' });
+        }
+        await message.deleteOne();
+        res.json({ message: 'Message removed' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
 
-export { submitContactForm, getContactMessages };
+export { submitContactForm, getContactMessages, deleteContactMessage };

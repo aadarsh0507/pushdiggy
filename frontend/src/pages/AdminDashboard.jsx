@@ -99,6 +99,15 @@ const AdminDashboard = () => {
     fetchContactMessages();
   }, [activeTab]); // Fetch messages when the activeTab changes to 'messages'
 
+  const deleteMessage = async (messageId) => {
+    try {
+      await api.delete(`/contact/messages/${messageId}`);
+      setContactMessages(contactMessages.filter(msg => msg._id !== messageId));
+    } catch (err) {
+      console.error('Error deleting message:', err);
+    }
+  };
+
   // Check for tab parameter in URL and set active tab
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -789,12 +798,19 @@ const AdminDashboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(message.createdAt).toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex space-x-2">
                       <button
                         onClick={() => setSelectedMessage(message)}
                         className="text-blue-600 hover:text-blue-900"
                       >
                         View
+                      </button>
+                       <button
+                        onClick={() => deleteMessage(message._id)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Delete message"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>

@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { submitContactForm, getContactMessages } from '../controllers/contactController.js'; // Import controller functions
+import { submitContactForm, getContactMessages, deleteContactMessage } from '../controllers/contactController.js'; // Import controller functions
 import Contact from '../models/Contact.js'; // Import the Contact model
 
 // @desc    Submit contact form
@@ -19,4 +19,7 @@ router.get('/messages', async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
+
+router.route('/:id').delete(deleteContactMessage);
+
 export default router;
