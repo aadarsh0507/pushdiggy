@@ -28,14 +28,14 @@ const Home = () => {
 
   // Service categories with icons and descriptions
   const serviceCategories = [
-    {
-      name: 'Camera Services',
-      icon: Camera,
-      description: 'Professional camera installation and surveillance solutions',
-      color: 'from-purple-600 to-blue-600',
-      category: 'camera',
-      adminPath: '/admin/camera-services'
-    },
+    // {
+    //   name: 'Camera Services',
+    //   icon: Camera,
+    //   description: 'Professional camera installation and surveillance solutions',
+    //   color: 'from-purple-600 to-blue-600',
+    //   category: 'camera',
+    //   adminPath: '/admin/camera-services'
+    // },
     {
       name: 'Printer Services',
       icon: Printer,
@@ -60,33 +60,33 @@ const Home = () => {
       category: 'digital-marketing',
       adminPath: '/admin/digital-marketing-services'
     },
-    {
-      name: 'Mobile Apps',
-      icon: Smartphone,
-      description: 'Mobile application development services',
-      color: 'from-indigo-600 to-blue-600',
-      category: 'mobile-app',
-      adminPath: '/admin/mobile-app-services'
-    },
-    {
-      name: 'IT Consultation',
-      icon: Briefcase,
-      description: 'IT consulting and strategic technology solutions',
-      color: 'from-amber-600 to-orange-600',
-      category: 'it-consultation',
-      adminPath: '/admin/it-consultation-services'
-    }
+    // {
+    //   name: 'Mobile Apps',
+    //   icon: Smartphone,
+    //   description: 'Mobile application development services',
+    //   color: 'from-indigo-600 to-blue-600',
+    //   category: 'mobile-app',
+    //   adminPath: '/admin/mobile-app-services'
+    // },
+    // {
+    //   name: 'IT Consultation',
+    //   icon: Briefcase,
+    //   description: 'IT consulting and strategic technology solutions',
+    //   color: 'from-amber-600 to-orange-600',
+    //   category: 'it-consultation',
+    //   adminPath: '/admin/it-consultation-services'
+    // }
   ];
 
   // Function to get icon based on service category
   const getServiceIcon = (service) => {
     const categoryMap = {
-      'camera': Camera,
+      // 'camera': Camera,
       'printer': Printer,
       'website': Globe,
       'digital-marketing': TrendingUp,
-      'mobile-app': Smartphone,
-      'it-consultation': Briefcase
+      // 'mobile-app': Smartphone,
+      // 'it-consultation': Briefcase
     };
     
     const IconComponent = categoryMap[service.category] || TrendingUp;
@@ -105,11 +105,6 @@ const Home = () => {
     };
     
     return colorMap[service.category] || 'from-blue-600 to-purple-600';
-  };
-
-  // Handle service category card click - redirect to admin service page
-  const handleServiceCategoryClick = (adminPath) => {
-    navigate(adminPath);
   };
 
   const testimonials = [
@@ -194,7 +189,9 @@ const Home = () => {
             {serviceCategories.map((category) => (
               <button
                 key={category.name}
-                onClick={() => handleServiceCategoryClick(category.adminPath)}
+                onClick={() =>
+                  navigate(`/${category.category}-services`)
+                }
                 className="flex flex-col items-center p-6 rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group bg-white shadow-lg hover:shadow-xl"
               >
                 <div className={`w-16 h-16 bg-gradient-to-r ${category.color} rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
@@ -245,7 +242,7 @@ const Home = () => {
       </section>
 
       {/* Featured Services Section */}
-      <section className="py-20 bg-gray-50">
+      {/* <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -313,7 +310,7 @@ const Home = () => {
             </Link>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Why Choose Us */}
       <section className="py-20 bg-white">

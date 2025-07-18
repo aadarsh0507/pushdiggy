@@ -15,6 +15,7 @@ const AdminDashboard = () => {
   const [clients, setClients] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [contactMessages, setContactMessages] = useState([]); // State to hold contact messages
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState('All');
@@ -82,6 +83,21 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchBills();
   }, []); // Fetch when component mounts
+
+  // Fetch contact messages from backend
+ useEffect(() => {
+    const fetchContactMessages = async () => {
+      if (activeTab === 'messages') {
+        try {
+          const res = await api.get('/contact/messages');
+          setContactMessages(res.data);
+        } catch (err) {
+          console.error('Error fetching contact messages:', err);
+        }
+      }
+    };
+    fetchContactMessages();
+  }, [activeTab]); // Fetch messages when the activeTab changes to 'messages'
 
   // Check for tab parameter in URL and set active tab
   useEffect(() => {
@@ -548,7 +564,7 @@ const AdminDashboard = () => {
 
   const renderServices = () => (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Service Management</h2>
         <button 
           onClick={() => {
@@ -560,7 +576,7 @@ const AdminDashboard = () => {
           <Plus className="h-4 w-4 mr-2" />
           Add Service
         </button>
-      </div>
+      </div> */}
 
       {/* Service Category Icons */}
       <div className="bg-white rounded-lg shadow p-6">
@@ -758,25 +774,103 @@ const AdminDashboard = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              <tr>
-                <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
-                  No messages to display.
-                </td>
-              </tr>
+              {contactMessages.length > 0 ? (
+                contactMessages.map((message) => (
+                  <tr key={message._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{message.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{message.subject}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(message.createdAt).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => setSelectedMessage(message)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                    No messages to display.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
     </div>
   );
+  
+
+  // Render a modal or sidebar for viewing a single message
+  const renderMessageDetails = () => {
+    console.log('Selected message:', selectedMessage);
+    console.log('Selected message:', selectedMessage);
+    if (!selectedMessage) return null;
+
+    return (
+      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
+          <div className="mt-3">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Message Details</h3>
+              <button
+                onClick={() => setSelectedMessage(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-gray-600">From</p>
+                <p className="text-lg text-gray-900">{selectedMessage.name} ({selectedMessage.email})</p>
+              </div>
+              {selectedMessage.phone && (
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Phone</p>
+                  <p className="text-lg text-gray-900">{selectedMessage.phone}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-medium text-gray-600">Subject</p>
+                <p className="text-lg text-gray-900">{selectedMessage.subject}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Message</p>
+                <p className="text-lg text-gray-900 whitespace-pre-wrap">{selectedMessage.message}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Received At</p>
+                <p className="text-lg text-gray-900">{new Date(selectedMessage.createdAt).toLocaleString()}</p>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              {/* You can add Reply or Delete buttons here */}
+              <button
+                onClick={() => setSelectedMessage(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Render the Bills section (using the new component)
   const renderBills = () => {
@@ -832,6 +926,7 @@ const AdminDashboard = () => {
           {activeTab === 'billing' && <AdminBilling clients={clients} />}
           {activeTab === 'bills' && renderBills()} {/* Render the Bills section */}
         </div>
+        {renderMessageDetails()} {/* Render the message details modal/sidebar */}
       </div>
     </div>
   );

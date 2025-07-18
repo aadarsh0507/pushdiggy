@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Users, Lightbulb, Plus, Edit, Trash2, CheckCircle, Clock, Award } from 'lucide-react';
+import { Briefcase, Users, Lightbulb, Plus, Edit, Trash2, CheckCircle, Award } from 'lucide-react';
 import api from '../api/api';
 import ServiceNavigation from '../components/ServiceNavigation';
+import { useAuth } from '../context/AuthContext';
 
 const ITConsultationServices = () => {
+  const { user } = useAuth(); // Use the useAuth hook
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -114,15 +116,17 @@ const ITConsultationServices = () => {
         </div>
 
         {/* Add Service Button */}
-        <div className="flex justify-end mb-6">
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-6 py-3 rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300 flex items-center"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Add Consultation Service
-          </button>
-        </div>
+        {user && user.role === 'admin' && (
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-6 py-3 rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300 flex items-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Consultation Service
+            </button>
+          </div>
+        )}
 
         {/* Services Grid */}
         {loading ? (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Globe, Code, Smartphone, Plus, Edit, Trash2, CheckCircle, Zap, Shield } from 'lucide-react';
 import api from '../api/api';
 import ServiceNavigation from '../components/ServiceNavigation';
+import { useAuth } from '../context/AuthContext';
 
 const WebsiteServices = () => {
   const [services, setServices] = useState([]);
@@ -17,6 +18,8 @@ const WebsiteServices = () => {
     technologies: '',
     hosting: ''
   });
+
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchWebsiteServices();
@@ -114,15 +117,18 @@ const WebsiteServices = () => {
         </div>
 
         {/* Add Service Button */}
-        <div className="flex justify-end mb-6">
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-300 flex items-center"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Add Website Service
-          </button>
-        </div>
+        {user?.role === 'admin' && (
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-300 flex items-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Website Service
+            </button>
+          </div>
+        )}
+
 
         {/* Services Grid */}
         {loading ? (

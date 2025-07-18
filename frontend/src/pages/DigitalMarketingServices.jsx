@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Target, BarChart3, Plus, Edit, Trash2, CheckCircle, Users, Share2 } from 'lucide-react';
 import api from '../api/api';
+import { useAuth } from '../context/AuthContext'; // Corrected import path
 import ServiceNavigation from '../components/ServiceNavigation';
 
 const DigitalMarketingServices = () => {
@@ -17,6 +18,7 @@ const DigitalMarketingServices = () => {
     platform: '',
     duration: ''
   });
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchMarketingServices();
@@ -114,15 +116,17 @@ const DigitalMarketingServices = () => {
         </div>
 
         {/* Add Service Button */}
-        <div className="flex justify-end mb-6">
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-300 flex items-center"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Add Marketing Service
-          </button>
-        </div>
+        {user && user.role === 'admin' && (
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-300 flex items-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Marketing Service
+            </button>
+          </div>
+        )}
 
         {/* Services Grid */}
         {loading ? (

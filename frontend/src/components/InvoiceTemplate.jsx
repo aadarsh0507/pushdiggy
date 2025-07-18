@@ -48,7 +48,7 @@ const InvoiceTemplate = ({ billData }) => {
         box-shadow: none !important;
       }
       .print-table {
-        width: 100% !important;
+        width: 100% !important; /* Ensure the main table takes full width */
         border-collapse: collapse !important;
       }
       .print-table td {
@@ -67,7 +67,15 @@ const InvoiceTemplate = ({ billData }) => {
       .print-content td {
         page-break-inside: auto !important;
       }
+      /* Target the main content TD and its direct children divs for full width */
+      .print-content > tr > td[style*="vertical-align: top"] {
+        width: 100% !important;
+      }
+      .print-content > tr > td[style*="vertical-align: top"] > div {
+        width: 100% !important;
+      }
       .invoice-table {
+        width: 100% !important; /* Ensure the invoice items table takes full width */
         page-break-inside: auto !important;
       }
       .invoice-table tr {
@@ -81,6 +89,7 @@ const InvoiceTemplate = ({ billData }) => {
         display: none !important;
       }
       .invoice-table {
+        width: 100% !important; /* Redundant but good for specificity */
         font-size: 10px !important;
       }
       .invoice-table th, .invoice-table td {
@@ -88,6 +97,10 @@ const InvoiceTemplate = ({ billData }) => {
       }
       .summary-section {
         font-size: 11px !important;
+      }
+      /* Ensure flex containers within table cells also take full width */
+      .print-content td > div {
+        width: 100% !important;
       }
       * {
         -webkit-print-color-adjust: exact !important;
@@ -101,17 +114,16 @@ const InvoiceTemplate = ({ billData }) => {
       className="bg-white p-8 rounded-lg shadow-xl mx-auto my-8"
       style={{
         width: '210mm',
-        minHeight: '297mm',
-        padding: '10mm',
         boxSizing: 'border-box',
+ minHeight: '297mm',
         backgroundColor: 'white'
       }}
       id="invoice-content-to-print"
     >
       <style>{printStyles}</style>
       
-      <table className="print-table" style={{ minHeight: '277mm' }}>
-        <thead className="print-header">
+      <table className="print-table">
+        <thead className="print-header" style={{ minHeight: '277mm' }}>
           <tr>
             <td>
               <div className="flex justify-between items-center border-b pb-6 border-gray-300">
@@ -136,7 +148,7 @@ const InvoiceTemplate = ({ billData }) => {
           <tr>
             <td style={{ verticalAlign: 'top', height: '100%' }}>
               {/* Main Content */}
-              <div style={{ minHeight: '180mm', display: 'flex', flexDirection: 'column' }}>
+              <div className="content-below-header" style={{ minHeight: '180mm', display: 'flex', flexDirection: 'column', width: '100%' }}> {/* Added width: '100%' and class 'content-below-header' */}
                 <div className="flex justify-between items-start mt-6">
                   <div className="w-1/2">
                     <p className="text-sm font-semibold text-gray-800">Date: {formatDate(billData.date)}</p>
@@ -155,7 +167,7 @@ const InvoiceTemplate = ({ billData }) => {
                 <div className="mt-8">
                   <p className="text-sm font-semibold text-gray-800">Subject: {billData.subject || "N/A"}</p>
                 </div>
-                <div className="mt-8 border border-gray-300 rounded-lg overflow-hidden">
+                <div className="mt-8 border border-gray-300 rounded-lg overflow-hidden" style={{ width: '100%' }}> {/* Added width: '100%' */}
                   <table className="min-w-full bg-white invoice-table">
                     <thead className="bg-gray-100">
                       <tr>

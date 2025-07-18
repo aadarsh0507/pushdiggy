@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Camera, Video, Image, Settings, Plus, Edit, Trash2, Eye, CheckCircle } from 'lucide-react';
 import api from '../api/api';
 import ServiceNavigation from '../components/ServiceNavigation';
+import { useAuth } from '../context/AuthContext';
 
 const CameraServices = () => {
   const [services, setServices] = useState([]);
@@ -17,6 +18,8 @@ const CameraServices = () => {
     resolution: '',
     coverage: ''
   });
+
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchCameraServices();
@@ -114,15 +117,17 @@ const CameraServices = () => {
         </div>
 
         {/* Add Service Button */}
-        <div className="flex justify-end mb-6">
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 flex items-center"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Add Camera Service
-          </button>
-        </div>
+        {user?.role === 'admin' && (
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 flex items-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Camera Service
+            </button>
+          </div>
+        )}
 
         {/* Services Grid */}
         {loading ? (

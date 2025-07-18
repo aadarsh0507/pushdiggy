@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, User, Shield, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/api';
 
 const Login = () => {
   const location = useLocation();

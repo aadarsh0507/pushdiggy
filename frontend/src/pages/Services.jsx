@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, Star, Filter, Camera, Printer, Globe, TrendingUp, Smartphone, Briefcase } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 import api from '../api/api';
+
+
 
 const Services = () => {
   const [services, setServices] = useState([]);
@@ -10,6 +13,7 @@ const Services = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  const { user } = useAuth(); // Use the useAuth hook
   // Fetch services from backend
   useEffect(() => {
     const fetchServices = async () => {
@@ -119,15 +123,6 @@ const Services = () => {
     }
   };
 
-  // Handle service category card click - redirect to admin service page
-  const handleServiceCategoryClick = (category) => {
-    // Find the category object
-    const categoryObj = serviceCategories.find(cat => cat.category === category);
-    if (categoryObj) {
-      // Redirect to the admin service page
-      navigate(categoryObj.adminPath);
-    }
-  };
 
   return (
     <div className="min-h-screen">
@@ -143,7 +138,7 @@ const Services = () => {
         </div>
       </section>
 
-      {/* Service Categories Section */}
+    
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -159,7 +154,13 @@ const Services = () => {
             {serviceCategories.map((category) => (
               <button
                 key={category.name}
-                onClick={() => handleServiceCategoryClick(category.category)}
+                onClick={() => {
+                  if (user?.role === 'admin' && category.adminPath) {
+                    navigate(category.adminPath);
+                  } else {
+                    navigate('/' + category.category + '-services');
+                  }
+                }}
                 className="flex flex-col items-center p-6 rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group bg-white shadow-lg hover:shadow-xl"
               >
                 <div className={`w-16 h-16 bg-gradient-to-r ${category.color} rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
@@ -173,7 +174,7 @@ const Services = () => {
         </div>
       </section>
 
-      {/* Services Section */}
+
       <section id="services-section" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Filter Section */}
@@ -191,7 +192,7 @@ const Services = () => {
               </button>
             </div>
 
-            {/* Desktop Filters */}
+           
             <div className="hidden sm:flex flex-wrap gap-4">
               {categories.map((category) => (
                 <button
@@ -208,7 +209,7 @@ const Services = () => {
               ))}
             </div>
 
-            {/* Mobile Filters */}
+        
             {showFilters && (
               <div className="sm:hidden flex flex-wrap gap-2 mt-4">
                 {categories.map((category) => (
@@ -231,7 +232,7 @@ const Services = () => {
             )}
           </div>
 
-          {/* Services Grid */}
+         
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredServices.map((service) => (
               <div key={service.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
@@ -269,7 +270,7 @@ const Services = () => {
             ))}
           </div>
 
-          {filteredServices.length === 0 && (
+          {/* {filteredServices.length === 0 && (
             <div className="text-center py-12">
               <p className="text-xl text-gray-600">No services found for the selected category.</p>
               <button
@@ -279,7 +280,7 @@ const Services = () => {
                 View All Services
               </button>
             </div>
-          )}
+          )} */}
         </div>
       </section>
 

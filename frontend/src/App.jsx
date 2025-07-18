@@ -69,67 +69,44 @@ function App() {
             <Route path="/print-invoice/:invoiceId" element={<PrintInvoicePage />} />
             
             {/* Service Category Routes */}
-            <Route
-              path="/admin/camera-services"
+ <Route
+ path="/camera-services"
               element={
-                <ProtectedRoute requiredRole="admin">
                   <Layout>
                     <CameraServices />
                   </Layout>
-                </ProtectedRoute>
               }
             />
-            <Route
-              path="/admin/printer-services"
+ <Route
+ path="/printer-services"
               element={
-                <ProtectedRoute requiredRole="admin">
-                  <Layout>
-                    <PrinterServices />
-                  </Layout>
-                </ProtectedRoute>
+                <Layout><PrinterServices /></Layout>
               }
             />
-            <Route
-              path="/admin/website-services"
+ <Route
+ path="/website-services"
               element={
-                <ProtectedRoute requiredRole="admin">
-                  <Layout>
-                    <WebsiteServices />
-                  </Layout>
-                </ProtectedRoute>
+                <Layout><WebsiteServices /></Layout>
               }
             />
-            <Route
-              path="/admin/digital-marketing-services"
+ <Route
+ path="/digital-marketing-services"
               element={
-                <ProtectedRoute requiredRole="admin">
-                  <Layout>
-                    <DigitalMarketingServices />
-                  </Layout>
-                </ProtectedRoute>
+                <Layout><DigitalMarketingServices /></Layout>
               }
             />
-            <Route
-              path="/admin/mobile-app-services"
+ <Route
+ path="/mobile-app-services"
               element={
-                <ProtectedRoute requiredRole="admin">
-                  <Layout>
-                    <MobileAppServices />
-                  </Layout>
-                </ProtectedRoute>
+ <Layout><MobileAppServices /></Layout>
               }
             />
-            <Route
-              path="/admin/it-consultation-services"
+             <Route
+ path="/it-consultation-services"
               element={
-                <ProtectedRoute requiredRole="admin">
-                  <Layout>
-                    <ITConsultationServices />
-                  </Layout>
-                </ProtectedRoute>
+ <Layout><ITConsultationServices/></Layout>
               }
             />
-            
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

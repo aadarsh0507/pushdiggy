@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Smartphone, Code, Download, Plus, Edit, Trash2, CheckCircle, Zap, Shield } from 'lucide-react';
 import api from '../api/api';
+import { useAuth } from '../context/AuthContext';
 import ServiceNavigation from '../components/ServiceNavigation';
 
 const MobileAppServices = () => {
@@ -17,6 +18,8 @@ const MobileAppServices = () => {
     technology: '',
     developmentTime: ''
   });
+
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchMobileAppServices();
@@ -114,15 +117,17 @@ const MobileAppServices = () => {
         </div>
 
         {/* Add Service Button */}
-        <div className="flex justify-end mb-6">
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 flex items-center"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Add Mobile App Service
-          </button>
-        </div>
+        {user && user.role === 'admin' && (
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 flex items-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Mobile App Service
+            </button>
+          </div>
+        )}
 
         {/* Services Grid */}
         {loading ? (

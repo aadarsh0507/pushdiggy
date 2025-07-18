@@ -25,8 +25,10 @@
     height: auto !important;
     box-sizing: border-box !important;
     background: white !important;
-    position: relative !important;
-    page-break-after: auto !important;
+    position: relative !important; /* Keep relative for absolute children like watermark */
+    width: 100% !important; /* Ensure it takes full width */
+    padding: 15mm 20mm !important; /* Apply padding matching @page margin */
+    page-break-after: auto !important; /* Allow page breaks after the container if needed */
   }
 
   /* Ensure consistent formatting */
@@ -77,7 +79,9 @@
 
   /* Add space after fixed header */
   .content-below-header {
-    margin-top: 110px !important;
+ width: 100% !important;
+ margin-top: 140px !important; /* Increased margin for more space */
+ padding-top: 20px !important; /* Add padding to the top of the content below the header */
   }
 
   /* Flex containers fix */
