@@ -101,7 +101,7 @@ const AdminDashboard = () => {
 
   const deleteMessage = async (messageId) => {
     try {
-      await api.delete(`/contact/messages/${messageId}`);
+      await api.delete(`/contact/${messageId}`);
       setContactMessages(contactMessages.filter(msg => msg._id !== messageId));
     } catch (err) {
       console.error('Error deleting message:', err);
