@@ -31,6 +31,8 @@ const AdminBilling = ({ onBillCreated }) => {
     grandTotal: 0,
     date: '',
     ticketIds: [],
+    invoiceType: 'invoice',
+    performaInvoice: false,
   });
 
   const fetchResolvedTickets = async () => {
@@ -143,6 +145,8 @@ const AdminBilling = ({ onBillCreated }) => {
         grandTotal: 0,
         date: '',
         ticketIds: [],
+        invoiceType: 'invoice',
+        performaInvoice: false,
       });
     } catch (err) {
       setSelectedTicketIds([]);
@@ -177,6 +181,8 @@ const AdminBilling = ({ onBillCreated }) => {
         quantity: 1,
       })),
       ticketIds: selectedTicketIdsArray,
+      invoiceType: 'invoice',
+      performaInvoice: false,
     }));
     setEditingBill(null);
     setShowBillModal(true);
@@ -206,6 +212,8 @@ const AdminBilling = ({ onBillCreated }) => {
               grandTotal: 0,
               date: '',
               ticketIds: [],
+              invoiceType: 'invoice',
+              performaInvoice: false,
             });
           }} className="bg-blue-600 text-white px-4 py-2 rounded-lg">Create New Bill</button>
         </div>
@@ -280,13 +288,43 @@ const AdminBilling = ({ onBillCreated }) => {
               </button>
             </div>
             <form onSubmit={handleBillSubmit} className="space-y-6 text-left">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Subject</label>
-                <input type="text" name="subject" value={billForm.subject} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Subject</label>
+                  <input type="text" name="subject" value={billForm.subject} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Date</label>
+                  <input type="date" name="date" value={billForm.date} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Date</label>
-                <input type="date" name="date" value={billForm.date} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Invoice Type</label>
+                  <select 
+                    name="invoiceType" 
+                    value={billForm.invoiceType} 
+                    onChange={handleFormChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+                  >
+                    <option value="invoice">Invoice</option>
+                    <option value="performa">Performa Invoice</option>
+                  </select>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="performaInvoice"
+                    name="performaInvoice"
+                    checked={billForm.performaInvoice}
+                    onChange={(e) => setBillForm(prev => ({ ...prev, performaInvoice: e.target.checked }))}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="performaInvoice" className="ml-2 block text-sm text-gray-900">
+                    Mark as Performa Invoice
+                  </label>
+                </div>
               </div>
 
               <div className="border-t pt-4">

@@ -4,7 +4,7 @@ import api from '../api/api';
 import ServiceNavigation from '../components/ServiceNavigation';
 import { useAuth } from '../context/AuthContext';
 
-const WebsiteServices = () => {
+const WebsiteServices = ({ showAdminNav = false }) => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -79,7 +79,7 @@ const WebsiteServices = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-50">
-      <ServiceNavigation title="Website Development Services" />
+      <ServiceNavigation title="Website Development Services" showAdminNav={showAdminNav} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -117,7 +117,7 @@ const WebsiteServices = () => {
         </div>
 
         {/* Add Service Button */}
-        {user?.role === 'admin' && (
+        {user?.role === 'admin' && showAdminNav && (
           <div className="flex justify-end mb-6">
             <button
               onClick={() => setShowModal(true)}
@@ -128,7 +128,6 @@ const WebsiteServices = () => {
             </button>
           </div>
         )}
-
 
         {/* Services Grid */}
         {loading ? (
@@ -142,32 +141,34 @@ const WebsiteServices = () => {
                 <div className="bg-gradient-to-r from-green-600 to-teal-600 p-6 text-white">
                   <div className="flex justify-between items-start">
                     <Globe className="h-8 w-8" />
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => {
-                          setEditingService(service);
-                          setFormData({
-                            name: service.name,
-                            description: service.description,
-                            price: service.price,
-                            features: service.features?.join(', ') || '',
-                            websiteType: service.websiteType || '',
-                            technologies: service.technologies || '',
-                            hosting: service.hosting || ''
-                          });
-                          setShowModal(true);
-                        }}
-                        className="text-white hover:text-green-200"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteService(service._id)}
-                        className="text-white hover:text-red-200"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                    {user?.role === 'admin' && (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => {
+                            setEditingService(service);
+                            setFormData({
+                              name: service.name,
+                              description: service.description,
+                              price: service.price,
+                              features: service.features?.join(', ') || '',
+                              websiteType: service.websiteType || '',
+                              technologies: service.technologies || '',
+                              hosting: service.hosting || ''
+                            });
+                            setShowModal(true);
+                          }}
+                          className="text-white hover:text-green-200"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteService(service._id)}
+                          className="text-white hover:text-red-200"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <h3 className="text-xl font-bold mt-4">{service.name}</h3>
                   <p className="text-green-100 mt-2">{service.description}</p>

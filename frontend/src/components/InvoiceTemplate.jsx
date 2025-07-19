@@ -153,9 +153,17 @@ const InvoiceTemplate = ({ billData }) => {
                   <div className="w-1/2">
                     <p className="text-sm font-semibold text-gray-800">Date: {formatDate(billData.date)}</p>
                     <p className="text-sm font-semibold text-gray-800 mt-1">Invoice No: INV-PDS-{billData.invoiceNumber}</p>
+                    {billData.invoiceType && (
+                      <p className="text-sm font-semibold text-gray-800 mt-1">
+                        Type: {billData.invoiceType === 'performa' ? 'Performa Invoice' : 'Invoice'}
+                        {billData.performaInvoice && ' (Marked as Performa)'}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
-                    <h3 className="text-3xl font-bold text-gray-800 leading-none">INVOICE</h3>
+                    <h3 className="text-3xl font-bold text-gray-800 leading-none">
+                      {billData.invoiceType === 'performa' ? 'PERFORMA INVOICE' : 'INVOICE'}
+                    </h3>
                   </div>
                 </div>
                 <div className="mt-8 border-b pb-6 border-gray-200">

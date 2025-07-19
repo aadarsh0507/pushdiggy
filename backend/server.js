@@ -22,7 +22,7 @@ const app = express();
 // CORS middleware FIRST
 app.use(cors({
   origin: 
-  'https://5173-firebase-pushdiggygit-1751345989139.cluster-isls3qj2gbd5qs4jkjqvhahfv6.cloudworkstations.dev', // Change this to your frontend URL
+  'http://localhost:5173', // Change this to your frontend URL
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

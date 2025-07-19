@@ -13,7 +13,7 @@ import Client from '../models/client.js'; // Import the Client model
 
 export const createBill = async (req, res) => {
   try {
-    const { client, subject, items, subtotal, sgst, cgst, grandTotal, date, bankDetails, ticketIds, sgstPercent, cgstPercent, billTo } = req.body;
+    const { client, subject, items, subtotal, sgst, cgst, grandTotal, date, bankDetails, ticketIds, sgstPercent, cgstPercent, billTo, invoiceType, performaInvoice } = req.body;
     console.log('Received bill data in controller:', req.body);
 
     const currentYear = new Date().getFullYear();
@@ -54,6 +54,8 @@ export const createBill = async (req, res) => {
       grandTotal,
       date,
       invoiceNumber,
+      invoiceType: invoiceType || 'invoice',
+      performaInvoice: performaInvoice || false,
       client: client || undefined, // Store client ID if it exists, otherwise undefined
       subject,
       items,
@@ -181,7 +183,7 @@ export const getBillById = async (req, res) => {
 
 export const updateBill = async (req, res) => {
   try {
-    const { invoiceNumber, client, subject, items, subtotal, sgst, cgst, grandTotal, date, bankDetails, sgstPercent, cgstPercent, billTo } = req.body;
+    const { invoiceNumber, client, subject, items, subtotal, sgst, cgst, grandTotal, date, bankDetails, sgstPercent, cgstPercent, billTo, invoiceType, performaInvoice } = req.body;
 
     const updateData = {
       invoiceNumber,
@@ -195,6 +197,8 @@ export const updateBill = async (req, res) => {
       bankDetails,
       sgstPercent,
       cgstPercent,
+      invoiceType: invoiceType || 'invoice',
+      performaInvoice: performaInvoice || false,
       client: client || undefined,
       billTo: billTo, // Always update billTo from the form
     };

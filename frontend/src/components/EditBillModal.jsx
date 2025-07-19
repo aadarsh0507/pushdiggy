@@ -16,6 +16,8 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
     grandTotal: billData.grandTotal || 0,
     services: billData.items.map(item => ({ ...item, quantity: item.quantity || 1 })) || [], // Use 'items' from billData, ensure quantity exists
     clientId: billData.client?._id || '', // Store the client ID
+    invoiceType: billData.invoiceType || 'invoice',
+    performaInvoice: billData.performaInvoice || false,
     billTo: {
       name: billData.billTo?.name || '',
       address: billData.billTo?.address || '',
@@ -45,6 +47,8 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
       grandTotal: billData.grandTotal || 0,
       services: billData.items.map(item => ({ ...item, quantity: item.quantity || 1 })) || [], // Use 'items' from billData, ensure quantity exists
       clientId: billData.client?._id || '', // Update the client ID
+      invoiceType: billData.invoiceType || 'invoice',
+      performaInvoice: billData.performaInvoice || false,
       billTo: {
         name: billData.billTo?.name || '',
         address: billData.billTo?.address || '',
@@ -195,6 +199,36 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
                 onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
               />
+            </div>
+          </div>
+
+          {/* Invoice Type */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label htmlFor="invoiceType" className="block text-sm font-medium text-gray-700">Invoice Type</label>
+              <select 
+                name="invoiceType" 
+                id="invoiceType"
+                value={editedBill.invoiceType} 
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+              >
+                <option value="invoice">Invoice</option>
+                <option value="performa">Performa Invoice</option>
+              </select>
+            </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="performaInvoice"
+                name="performaInvoice"
+                checked={editedBill.performaInvoice}
+                onChange={(e) => setEditedBill(prev => ({ ...prev, performaInvoice: e.target.checked }))}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="performaInvoice" className="ml-2 block text-sm text-gray-900">
+                Mark as Performa Invoice
+              </label>
             </div>
           </div>
 

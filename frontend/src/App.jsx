@@ -68,43 +68,95 @@ function App() {
             />
             <Route path="/print-invoice/:invoiceId" element={<PrintInvoicePage />} />
             
-            {/* Service Category Routes */}
- <Route
- path="/camera-services"
+            {/* Service Category Routes - User Access */}
+            <Route
+              path="/camera-services"
               element={
-                  <Layout>
-                    <CameraServices />
-                  </Layout>
+                <Layout>
+                  <CameraServices />
+                </Layout>
               }
             />
- <Route
- path="/printer-services"
+            <Route
+              path="/printer-services"
               element={
                 <Layout><PrinterServices /></Layout>
               }
             />
- <Route
- path="/website-services"
+            <Route
+              path="/website-services"
               element={
                 <Layout><WebsiteServices /></Layout>
               }
             />
- <Route
- path="/digital-marketing-services"
+            <Route
+              path="/digital-marketing-services"
               element={
                 <Layout><DigitalMarketingServices /></Layout>
               }
             />
- <Route
- path="/mobile-app-services"
+            <Route
+              path="/mobile-app-services"
               element={
- <Layout><MobileAppServices /></Layout>
+                <Layout><MobileAppServices /></Layout>
               }
             />
-             <Route
- path="/it-consultation-services"
+            <Route
+              path="/it-consultation-services"
               element={
- <Layout><ITConsultationServices/></Layout>
+                <Layout><ITConsultationServices/></Layout>
+              }
+            />
+
+            {/* Admin Service Category Routes - With Admin Navigation */}
+            <Route
+              path="/admin/camera-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout>
+                    <CameraServices showAdminNav={true} />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/printer-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout><PrinterServices showAdminNav={true} /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/website-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout><WebsiteServices showAdminNav={true} /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/digital-marketing-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout><DigitalMarketingServices showAdminNav={true} /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/mobile-app-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout><MobileAppServices showAdminNav={true} /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/it-consultation-services"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout><ITConsultationServices showAdminNav={true} /></Layout>
+                </ProtectedRoute>
               }
             />
             <Route path="*" element={<Navigate to="/" replace />} />

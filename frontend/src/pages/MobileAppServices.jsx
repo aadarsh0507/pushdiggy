@@ -4,7 +4,7 @@ import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import ServiceNavigation from '../components/ServiceNavigation';
 
-const MobileAppServices = () => {
+const MobileAppServices = ({ showAdminNav = false }) => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -79,7 +79,7 @@ const MobileAppServices = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50">
-      <ServiceNavigation title="Mobile App Development Services" />
+      <ServiceNavigation title="Mobile App Development Services" showAdminNav={showAdminNav} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -117,7 +117,7 @@ const MobileAppServices = () => {
         </div>
 
         {/* Add Service Button */}
-        {user && user.role === 'admin' && (
+        {user?.role === 'admin' && showAdminNav && (
           <div className="flex justify-end mb-6">
             <button
               onClick={() => setShowModal(true)}
@@ -141,7 +141,8 @@ const MobileAppServices = () => {
                 <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-6 text-white">
                   <div className="flex justify-between items-start">
                     <Smartphone className="h-8 w-8" />
-                    <div className="flex space-x-2">
+                    {user?.role === 'admin' && showAdminNav && (
+                      <div className="flex space-x-2">
                       <button
                         onClick={() => {
                           setEditingService(service);
@@ -165,8 +166,9 @@ const MobileAppServices = () => {
                         className="text-white hover:text-red-200"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                                              </button>
+                      </div>
+                    )}
                   </div>
                   <h3 className="text-xl font-bold mt-4">{service.name}</h3>
                   <p className="text-indigo-100 mt-2">{service.description}</p>

@@ -6,6 +6,16 @@ const billSchema = new mongoose.Schema({
     unique: true,
     trim: true,
   },
+  invoiceType: {
+    type: String,
+    enum: ['invoice', 'performa'],
+    default: 'invoice',
+    required: true,
+  },
+  performaInvoice: {
+    type: Boolean,
+    default: false,
+  },
   client: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Client',

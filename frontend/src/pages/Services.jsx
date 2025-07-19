@@ -63,8 +63,7 @@ const Services = () => {
       description: 'Professional camera installation and surveillance solutions',
       color: 'from-purple-600 to-blue-600',
       hoverColor: 'hover:border-purple-500 hover:bg-purple-50',
-      category: 'camera',
-      adminPath: '/admin/camera-services'
+      category: 'camera'
     },
     {
       name: 'Printer Services',
@@ -72,8 +71,7 @@ const Services = () => {
       description: 'Printer setup, maintenance, and support services',
       color: 'from-orange-600 to-red-600',
       hoverColor: 'hover:border-orange-500 hover:bg-orange-50',
-      category: 'printer',
-      adminPath: '/admin/printer-services'
+      category: 'printer'
     },
     {
       name: 'Website Services',
@@ -81,8 +79,7 @@ const Services = () => {
       description: 'Custom website development and web solutions',
       color: 'from-green-600 to-teal-600',
       hoverColor: 'hover:border-green-500 hover:bg-green-50',
-      category: 'website',
-      adminPath: '/admin/website-services'
+      category: 'website'
     },
     {
       name: 'Digital Marketing',
@@ -90,8 +87,7 @@ const Services = () => {
       description: 'Digital marketing and online promotion services',
       color: 'from-pink-600 to-purple-600',
       hoverColor: 'hover:border-pink-500 hover:bg-pink-50',
-      category: 'digital-marketing',
-      adminPath: '/admin/digital-marketing-services'
+      category: 'digital-marketing'
     },
     {
       name: 'Mobile Apps',
@@ -99,8 +95,7 @@ const Services = () => {
       description: 'Mobile application development services',
       color: 'from-indigo-600 to-blue-600',
       hoverColor: 'hover:border-indigo-500 hover:bg-indigo-50',
-      category: 'mobile-app',
-      adminPath: '/admin/mobile-app-services'
+      category: 'mobile-app'
     },
     {
       name: 'IT Consultation',
@@ -108,8 +103,7 @@ const Services = () => {
       description: 'IT consulting and strategic technology solutions',
       color: 'from-amber-600 to-orange-600',
       hoverColor: 'hover:border-amber-500 hover:bg-amber-50',
-      category: 'it-consultation',
-      adminPath: '/admin/it-consultation-services'
+      category: 'it-consultation'
     }
   ];
 
@@ -154,13 +148,7 @@ const Services = () => {
             {serviceCategories.map((category) => (
               <button
                 key={category.name}
-                onClick={() => {
-                  if (user?.role === 'admin' && category.adminPath) {
-                    navigate(category.adminPath);
-                  } else {
-                    navigate('/' + category.category + '-services');
-                  }
-                }}
+                onClick={() => navigate('/' + category.category + '-services')}
                 className="flex flex-col items-center p-6 rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group bg-white shadow-lg hover:shadow-xl"
               >
                 <div className={`w-16 h-16 bg-gradient-to-r ${category.color} rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>

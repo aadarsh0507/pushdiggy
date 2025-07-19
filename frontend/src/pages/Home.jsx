@@ -26,67 +26,40 @@ const Home = () => {
 
   const featuredServices = services.slice(0, 3);
 
-  // Service categories with icons and descriptions
+  // Service categories with icons and descriptions (showing only 3 on home page)
   const serviceCategories = [
-    // {
-    //   name: 'Camera Services',
-    //   icon: Camera,
-    //   description: 'Professional camera installation and surveillance solutions',
-    //   color: 'from-purple-600 to-blue-600',
-    //   category: 'camera',
-    //   adminPath: '/admin/camera-services'
-    // },
     {
-      name: 'Printer Services',
-      icon: Printer,
-      description: 'Printer setup, maintenance, and support services',
-      color: 'from-orange-600 to-red-600',
-      category: 'printer',
-      adminPath: '/admin/printer-services'
+      name: 'Camera Services',
+      icon: Camera,
+      description: 'Professional camera installation and surveillance solutions',
+      color: 'from-purple-600 to-blue-600',
+      category: 'camera'
     },
     {
       name: 'Website Services',
       icon: Globe,
       description: 'Custom website development and web solutions',
       color: 'from-green-600 to-teal-600',
-      category: 'website',
-      adminPath: '/admin/website-services'
+      category: 'website'
     },
     {
       name: 'Digital Marketing',
       icon: TrendingUp,
       description: 'Digital marketing and online promotion services',
       color: 'from-pink-600 to-purple-600',
-      category: 'digital-marketing',
-      adminPath: '/admin/digital-marketing-services'
-    },
-    // {
-    //   name: 'Mobile Apps',
-    //   icon: Smartphone,
-    //   description: 'Mobile application development services',
-    //   color: 'from-indigo-600 to-blue-600',
-    //   category: 'mobile-app',
-    //   adminPath: '/admin/mobile-app-services'
-    // },
-    // {
-    //   name: 'IT Consultation',
-    //   icon: Briefcase,
-    //   description: 'IT consulting and strategic technology solutions',
-    //   color: 'from-amber-600 to-orange-600',
-    //   category: 'it-consultation',
-    //   adminPath: '/admin/it-consultation-services'
-    // }
+      category: 'digital-marketing'
+    }
   ];
 
   // Function to get icon based on service category
   const getServiceIcon = (service) => {
     const categoryMap = {
-      // 'camera': Camera,
+      'camera': Camera,
       'printer': Printer,
       'website': Globe,
       'digital-marketing': TrendingUp,
-      // 'mobile-app': Smartphone,
-      // 'it-consultation': Briefcase
+      'mobile-app': Smartphone,
+      'it-consultation': Briefcase
     };
     
     const IconComponent = categoryMap[service.category] || TrendingUp;
@@ -220,8 +193,8 @@ const Home = () => {
               <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Award className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900">1+</h3>
-              <p className="text-gray-600">Years Experience</p>
+              <h3 className="text-3xl font-bold text-gray-900">6+</h3>
+              <p className="text-gray-600">Months Experience</p>
             </div>
             <div className="text-center">
               <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -234,7 +207,7 @@ const Home = () => {
               <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900">1000+</h3>
+              <h3 className="text-3xl font-bold text-gray-900">5+</h3>
               <p className="text-gray-600">Projects Completed</p>
             </div>
           </div>

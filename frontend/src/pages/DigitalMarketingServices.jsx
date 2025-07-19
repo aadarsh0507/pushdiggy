@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Target, BarChart3, Plus, Edit, Trash2, CheckCircle, Users, Share2 } from 'lucide-react';
 import api from '../api/api';
-import { useAuth } from '../context/AuthContext'; // Corrected import path
+import { useAuth } from '../context/AuthContext';
 import ServiceNavigation from '../components/ServiceNavigation';
 
-const DigitalMarketingServices = () => {
+const DigitalMarketingServices = ({ showAdminNav = false }) => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -78,7 +78,7 @@ const DigitalMarketingServices = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
-      <ServiceNavigation title="Digital Marketing Services" />
+      <ServiceNavigation title="Digital Marketing Services" showAdminNav={showAdminNav} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -116,7 +116,7 @@ const DigitalMarketingServices = () => {
         </div>
 
         {/* Add Service Button */}
-        {user && user.role === 'admin' && (
+        {user?.role === 'admin' && showAdminNav && (
           <div className="flex justify-end mb-6">
             <button
               onClick={() => setShowModal(true)}
@@ -140,32 +140,34 @@ const DigitalMarketingServices = () => {
                 <div className="bg-gradient-to-r from-pink-600 to-purple-600 p-6 text-white">
                   <div className="flex justify-between items-start">
                     <TrendingUp className="h-8 w-8" />
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => {
-                          setEditingService(service);
-                          setFormData({
-                            name: service.name,
-                            description: service.description,
-                            price: service.price,
-                            features: service.features?.join(', ') || '',
-                            marketingType: service.marketingType || '',
-                            platform: service.platform || '',
-                            duration: service.duration || ''
-                          });
-                          setShowModal(true);
-                        }}
-                        className="text-white hover:text-pink-200"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteService(service._id)}
-                        className="text-white hover:text-red-200"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                    {user?.role === 'admin' && showAdminNav && (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => {
+                            setEditingService(service);
+                            setFormData({
+                              name: service.name,
+                              description: service.description,
+                              price: service.price,
+                              features: service.features?.join(', ') || '',
+                              marketingType: service.marketingType || '',
+                              platform: service.platform || '',
+                              duration: service.duration || ''
+                            });
+                            setShowModal(true);
+                          }}
+                          className="text-white hover:text-pink-200"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteService(service._id)}
+                          className="text-white hover:text-red-200"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <h3 className="text-xl font-bold mt-4">{service.name}</h3>
                   <p className="text-pink-100 mt-2">{service.description}</p>
