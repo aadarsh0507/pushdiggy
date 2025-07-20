@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Users, Award, TrendingUp, Target, Eye, Heart } from 'lucide-react';
+import { CheckCircle, Users, Award, TrendingUp, Target, Eye, Heart, User } from 'lucide-react';
 import { teamMembers } from '../data/sampleData';
 
 const About = () => {
@@ -34,12 +34,22 @@ const About = () => {
               </p>
             </div>
             <div className="relative">
-              <img
-                src="https://images.pexels.com/photos/3184398/pexels-photo-3184398.jpeg?auto=compress&cs=tinysrgb&w=800"
+              {/* Placeholder for office image - replace src with actual image when available */}
+              <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg shadow-xl h-80 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="bg-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-10 w-10 text-white" />
+                  </div>
+                  <p className="text-blue-600 font-semibold">Office Image</p>
+                  <p className="text-blue-500 text-sm">Coming Soon</p>
+                </div>
+              </div>
+              {/* Uncomment and replace with actual image when available */}
+              {/* <img
+                src="/path-to-your-office-image.jpg"
                 alt="PUSH DIGGY Office"
-                className="rounded-lg shadow-xl"
-              />
-              <div className="absolute inset-0 bg-blue-600 opacity-10 rounded-lg"></div>
+                className="rounded-lg shadow-xl w-full h-80 object-cover"
+              /> */}
             </div>
           </div>
         </div>
@@ -106,11 +116,22 @@ const About = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {teamMembers.map((member) => (
               <div key={member.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                <img
+                {/* Placeholder for team member image - replace with actual images when available */}
+                <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <User className="h-8 w-8 text-white" />
+                    </div>
+                    <p className="text-gray-600 font-semibold">Photo</p>
+                    <p className="text-gray-500 text-sm">Coming Soon</p>
+                  </div>
+                </div>
+                {/* Uncomment and replace with actual image when available */}
+                {/* <img
                   src={member.image}
                   alt={member.name}
                   className="w-full h-64 object-cover"
-                />
+                /> */}
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">{member.name}</h3>
                   <p className="text-blue-600 font-semibold mb-3">{member.role}</p>
@@ -127,7 +148,7 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              TechNova by the Numbers
+              PUSH DIGGY by the Numbers
             </h2>
             <p className="text-xl text-blue-100 max-w-2xl mx-auto">
               Our achievements and milestones reflect our commitment to excellence and growth.
@@ -139,21 +160,21 @@ const About = () => {
               <div className="bg-white bg-opacity-20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-4xl font-bold mb-2">500+</h3>
+              <h3 className="text-4xl font-bold mb-2">3+</h3>
               <p className="text-blue-100">Satisfied Clients</p>
             </div>
             <div className="text-center">
               <div className="bg-white bg-opacity-20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Award className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-4xl font-bold mb-2">15+</h3>
+              <h3 className="text-4xl font-bold mb-2">1+</h3>
               <p className="text-blue-100">Years of Excellence</p>
             </div>
             <div className="text-center">
               <div className="bg-white bg-opacity-20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-4xl font-bold mb-2">1000+</h3>
+              <h3 className="text-4xl font-bold mb-2">5+</h3>
               <p className="text-blue-100">Projects Delivered</p>
             </div>
             <div className="text-center">

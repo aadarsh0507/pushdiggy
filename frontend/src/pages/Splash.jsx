@@ -8,6 +8,8 @@ const Splash = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
+      // Set flag to indicate user came from splash screen
+      sessionStorage.setItem('fromSplash', 'true');
       navigate("/home");
     }, 3000); // 3 sec delay
 
@@ -16,11 +18,13 @@ const Splash = () => {
 
   return (
     <div className="flex items-center justify-center h-screen bg-white">
-      <img
-              src={logo}// 👈 replace with your real logo file
-        alt="Company Logo"
-        className="w-30 h-60 animate-ping-slow"
-      />
+      <div className="text-center">
+        <img
+          src={logo}
+          alt="Push Diggy Logo"
+          className="w-30 h-60 animate-ping-slow mx-auto"
+        />
+      </div>
     </div>
   );
 };

@@ -23,6 +23,10 @@ const ClientDashboard = () => {
   const { user } = useAuth();
   const [showInvoiceModal, setShowInvoiceModal] = useState(false); // New state for invoice modal
   const [selectedBill, setSelectedBill] = useState(null); // New state for selected bill
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Fetch client data, support requests, and bills
   useEffect(() => {
@@ -125,6 +129,104 @@ const ClientDashboard = () => {
     }
   };
 
+  // Pagination functions
+  const getCurrentItems = (items) => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return items.slice(indexOfFirstItem, indexOfLastItem);
+  };
+
+  const getTotalPages = (items) => {
+    return Math.ceil(items.length / itemsPerPage);
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const renderPagination = (totalItems) => {
+    const totalPages = getTotalPages(totalItems);
+    if (totalPages <= 1) return null;
+
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="flex items-center justify-between px-6 py-3 bg-white border-t border-gray-200">
+        <div className="flex items-center text-sm text-gray-700">
+          <span>
+            Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems.length)} of {totalItems.length} results
+          </span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          
+          {startPage > 1 && (
+            <>
+              <button
+                onClick={() => handlePageChange(1)}
+                className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                1
+              </button>
+              {startPage > 2 && <span className="px-2 text-gray-500">...</span>}
+            </>
+          )}
+
+          {pageNumbers.map(number => (
+            <button
+              key={number}
+              onClick={() => handlePageChange(number)}
+              className={`px-3 py-1 text-sm font-medium rounded-md ${
+                currentPage === number
+                  ? 'text-white bg-blue-600 border border-blue-600'
+                  : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {number}
+            </button>
+          ))}
+
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && <span className="px-2 text-gray-500">...</span>}
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const renderOverview = () => {
     if (isLoading) return <div className="text-center py-12">Loading...</div>;
     if (!clientData) return <div className="text-center py-12">No client data found</div>;
@@ -132,7 +234,7 @@ const ClientDashboard = () => {
     return (
       <div className="space-y-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Welcome back, {clientData.name}!</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Overview</h2>
           
           {/* Account Summary */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -311,7 +413,8 @@ const ClientDashboard = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
- <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket Number</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket Number</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -320,18 +423,16 @@ const ClientDashboard = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {supportRequests.map((request) => (
- // console.log("Assigned To for ticket:", request.assignedTo),
- // console.log("Rendering ticket with client ID:", request.clientId, "and ticket ID:", request._id),
+                {getCurrentItems(supportRequests).map((request, index) => (
                   <tr key={request.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{((currentPage - 1) * itemsPerPage) + index + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{request.ticketNumber}</td>
- <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{request.subject}</div>
                         <div className="text-sm text-gray-500">{request.description.substring(0, 50)}...</div>
- {/* Close the div for the description */}
- </div>{/* Close the outer div */}
- </td> {/* Close the td */}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit ${getStatusColor(request.priority)}`}>
                         {getPriorityIcon(request.priority)}
@@ -364,6 +465,7 @@ const ClientDashboard = () => {
             </div>
           )}
         </div>
+        {renderPagination(supportRequests)}
       </div>
     );
   };
@@ -383,6 +485,7 @@ const ClientDashboard = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Number</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
@@ -392,8 +495,9 @@ const ClientDashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {clientBills.length > 0 ? (
-                  clientBills.map((bill) => (
+                  getCurrentItems(clientBills).map((bill, index) => (
                     <tr key={bill._id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{((currentPage - 1) * itemsPerPage) + index + 1}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{bill.invoiceNumber}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(bill.date).toLocaleDateString()}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{bill.subject}</td>
@@ -412,8 +516,7 @@ const ClientDashboard = () => {
                 ) : (
 
                   <tr>
-
-                    <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
                       No bills found.
                     </td>
                   </tr>
@@ -422,37 +525,10 @@ const ClientDashboard = () => {
             </table>
           </div>
         </div>
+        {renderPagination(clientBills)}
       </div>
     );
   };
-
-  const renderMessages = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Messages</h2>
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              <tr>
-                <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
-                  No messages to display.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
 
@@ -460,7 +536,9 @@ const ClientDashboard = () => {
         <div className="min-h-screen bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">Client Dashboard</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Welcome {user?.name || 'Client'}
+              </h1>
               <p className="text-gray-600">Manage your services and support requests</p>
             </div>
     
@@ -471,8 +549,7 @@ const ClientDashboard = () => {
                   { key: 'overview', label: 'Overview', icon: Settings },
                   { key: 'services', label: 'My Services', icon: Settings },
                   { key: 'support', label: 'Support', icon: MessageSquare },
-                  { key: 'billing', label: 'Billing', icon: CreditCard },
-                  { key: 'messages', label: 'Messages', icon: MessageSquare }
+                  { key: 'billing', label: 'Billing', icon: CreditCard }
                 ].map((tab) => {
                   const Icon = tab.icon;
                   return (
@@ -499,7 +576,6 @@ const ClientDashboard = () => {
               {activeTab === 'services' && renderServices()}
               {activeTab === 'support' && renderSupport()}
               {activeTab === 'billing' && renderBilling()}
-              {activeTab === 'messages' && renderMessages()}
             </div>
     
             {/* Support Modal */}

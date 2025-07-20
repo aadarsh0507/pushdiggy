@@ -16,8 +16,13 @@ const AdminSupportTickets = () => {
   const [editFormData, setEditFormData] = useState({});
   const [viewingTicketId, setViewingTicketId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('All');
+  const [filterPriority, setFilterPriority] = useState('All');
   const [filterDateRange, setFilterDateRange] = useState({ startDate: '', endDate: '' });
   const [filterClient, setFilterClient] = useState('All');
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     // Fetch tickets
@@ -65,11 +70,12 @@ const AdminSupportTickets = () => {
 
   // Effect to update filtered tickets when filters change
   const filteredTickets = tickets.filter(ticket => {
-    // Apply status, date range, and client filters
+    // Apply status, priority, date range, and client filters
     const statusMatch = filterStatus === 'All' || ticket.status === filterStatus;
+    const priorityMatch = filterPriority === 'All' || ticket.priority === filterPriority;
     const clientMatch = filterClient === 'All' || (ticket.clientId && ticket.clientId._id === filterClient);
     const dateMatch = (!filterDateRange.startDate || new Date(ticket.date) >= new Date(filterDateRange.startDate)) && (!filterDateRange.endDate || new Date(ticket.date) <= new Date(filterDateRange.endDate));
-    return statusMatch && clientMatch && dateMatch;
+    return statusMatch && priorityMatch && clientMatch && dateMatch;
   });
 
   const handleUpdateTicket = async (ticketId, updatedFields) => {
@@ -204,8 +210,106 @@ const AdminSupportTickets = () => {
 
  // Helper function to check if any admin has marked this ticket as billing ready
  const isBillingReadyByAnyAdmin = (ticket) => {
-   return ticket.billingReadyBy !== null && ticket.billingReadyBy !== undefined;
+   return ticket.readyForBilling && ticket.billingReadyBy;
  };
+
+  // Pagination functions
+  const getCurrentItems = (items) => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return items.slice(indexOfFirstItem, indexOfLastItem);
+  };
+
+  const getTotalPages = (items) => {
+    return Math.ceil(items.length / itemsPerPage);
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const renderPagination = (totalItems) => {
+    const totalPages = getTotalPages(totalItems);
+    if (totalPages <= 1) return null;
+
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="flex items-center justify-between px-6 py-3 bg-white border-t border-gray-200">
+        <div className="flex items-center text-sm text-gray-700">
+          <span>
+            Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems.length)} of {totalItems.length} results
+          </span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          
+          {startPage > 1 && (
+            <>
+              <button
+                onClick={() => handlePageChange(1)}
+                className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                1
+              </button>
+              {startPage > 2 && <span className="px-2 text-gray-500">...</span>}
+            </>
+          )}
+
+          {pageNumbers.map(number => (
+            <button
+              key={number}
+              onClick={() => handlePageChange(number)}
+              className={`px-3 py-1 text-sm font-medium rounded-md ${
+                currentPage === number
+                  ? 'text-white bg-blue-600 border border-blue-600'
+                  : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {number}
+            </button>
+          ))}
+
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && <span className="px-2 text-gray-500">...</span>}
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    );
+  };
 
 
  return (
@@ -253,7 +357,7 @@ const AdminSupportTickets = () => {
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-center">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-center">
         {/* Filter by Status */}
         <div className="flex flex-col">
           <label htmlFor="statusFilter" className="block text-sm font-medium text-gray-700">Filter by Status:</label>
@@ -272,6 +376,24 @@ const AdminSupportTickets = () => {
 
           </select>
 </div>
+        </div>
+
+        {/* Filter by Priority */}
+        <div className="flex flex-col">
+          <label htmlFor="priorityFilter" className="block text-sm font-medium text-gray-700">Filter by Priority:</label>
+          <div className="mt-1">
+            <select
+              id="priorityFilter"
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value="All">All</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
         </div>
 
         {/* Filter by Date Range */}
@@ -313,142 +435,116 @@ const AdminSupportTickets = () => {
  <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Ticket Number</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Client</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Company</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Description</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Priority</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Status</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Date</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Resolved Date</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Assigned To</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Ready for Billing</th>
-                 </tr>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket #</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Billing</th>
+              </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTickets.map(ticket => (
+              {getCurrentItems(filteredTickets).map((ticket, index) => (
                 <React.Fragment key={ticket._id}>
                   <tr className="hover:bg-gray-50">
-                    <td className="px-3 py-4 text-sm font-medium text-gray-900">{ticket.subject}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 w-24">{ticket.ticketNumber}</td>
-                    <td className="px-3 py-4 text-sm text-gray-900 w-24">{ticket.clientId?.name || 'N/A'}</td>
-                    <td className="px-3 py-4 text-sm text-gray-900 w-24">{ticket.clientId?.company}</td>
-                    <td className="px-3 py-4 text-sm text-gray-500 w-48">
-                      <div className="whitespace-pre-wrap">{ticket.description}</div>
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{((currentPage - 1) * itemsPerPage) + index + 1}</td>
+                    <td className="px-3 py-4 text-sm font-medium text-gray-900 max-w-xs truncate" title={ticket.subject}>{ticket.subject}</td>
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{ticket.ticketNumber}</td>
+                    <td className="px-3 py-4 text-sm text-gray-900 max-w-32 truncate" title={ticket.clientId?.name || 'N/A'}>
+                      {ticket.clientId?.name || 'N/A'}
                     </td>
                     <td className="px-3 py-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit`}>
                         {getPriorityIcon(ticket.priority)}
-                        <span>{ticket.priority}</span>
+                        <span className="hidden sm:inline">{ticket.priority}</span>
                       </span>
                     </td>
-                    <td className="px-3 py-4 text-sm text-gray-500 w-24">
+                    <td className="px-3 py-4 text-sm text-gray-500">
                       <select
                         value={ticket.status}
                         onChange={(e) => {
                           const newStatus = e.target.value;
                           handleUpdateTicket(ticket._id, { status: newStatus, assignedTo: assignedTo[ticket._id] });
                         }}
-                        className={`mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${getStatusColor(ticket.status)}`}
+                        className={`mt-1 block w-full py-1 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${getStatusColor(ticket.status)}`}
                       >
                         <option value="open">Open</option>
                         <option value="in-progress">In Progress</option>
                         <option value="resolved">Resolved</option>
                       </select>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 w-24">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(ticket.date).toLocaleDateString()}
                     </td>
- <td className="px-6 py-4 text-sm text-gray-500 w-24">
-                      {ticket.status === 'resolved' && ticket.resolvedDate
-                        ? new Date(ticket.resolvedDate).toLocaleDateString() : '-'}
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <select
+                        value={ticket.assignedTo?._id || ''}
+                        onChange={async (e) => {
+                          const newAssignedToId = e.target.value;
+                          const fallbackAdmin = admins.find(admin => admin._id === newAssignedToId) || null;
+                          setTickets(prev =>
+                            prev.map(t => {
+                              if (t._id === ticket._id) {
+                                return { ...t, assignedTo: fallbackAdmin };
+                              }
+                              return t;
+                            })
+                          );
+                          try {
+                            const updatedTicket = await handleUpdateTicket(ticket._id, {
+                              assignedTo: newAssignedToId || null,
+                            });
+                            setTickets(prev =>
+                              prev.map(t =>
+                                t._id === ticket._id ? { ...t, assignedTo: fallbackAdmin } : t
+                              ))
+                          } catch (error) {
+                            console.error('Failed to update assignment:', error);
+                          }
+                        }}
+                        className="block w-full py-1 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      >
+                        <option value="">Unassigned</option>
+                        {admins.map(admin => (
+                          <option key={admin._id} value={admin._id}>
+                            {admin.name}
+                          </option>
+                        ))}
+                      </select>
                     </td>
- <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
- <select
-  value={ticket.assignedTo?._id || ''}
-  onChange={async (e) => {
-    const newAssignedToId = e.target.value;
-
-    const fallbackAdmin = admins.find(admin => admin._id === newAssignedToId) || null;
-
-    // Optimistically update
-    setTickets(prev =>
-      prev.map(t => {
-        // If the current ticket matches, update its assignedTo
-        if (t._id === ticket._id) {
-          return { ...t, assignedTo: fallbackAdmin };
-        }
-        return t;
-      })
-    );
-    try {
-      const updatedTicket = await handleUpdateTicket(ticket._id, {
-        assignedTo: newAssignedToId || null,
-      });
-
-      // Update state with the fallbackAdmin to immediately show the name
-      setTickets(prev =>
-        prev.map(t =>
-          t._id === ticket._id ? { ...t, assignedTo: fallbackAdmin } : t
-        ))
-    } catch (error) {
-      console.error('Failed to update assignment:', error);
-    }
-  }}
->
-  <option value="">Unassigned</option>
-  {admins.map(admin => (
-    <option key={admin._id} value={admin._id}>
-      {admin.name}
-    </option>
-  ))}
-</select>
-
-
-
- </td>
- <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex space-x-2">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-1">
                         <button
                           onClick={() => handleViewDetails(ticket._id)}
- className="text-blue-600 hover:text-blue-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="text-blue-600 hover:text-blue-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           title="View Details"
                           disabled={editingTicketId !== null}
                         >
-                          <Eye className="h-5 w-5" />
+                          <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleEditTicket(ticket._id)}
- className="text-green-600 hover:text-green-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="text-green-600 hover:text-green-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Edit Ticket"
- disabled={isBillingReadyByCurrentAdmin(ticket)}
+                          disabled={isBillingReadyByCurrentAdmin(ticket)}
                         >
-                          <Edit className="h-5 w-5" />
+                          <Edit className="h-4 w-4" />
                         </button>
                       </div>
-
                     </td>
-
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="flex flex-col items-center space-y-1">
-                        <input
-                          type="checkbox"
-                          checked={isBillingReadyByCurrentAdmin(ticket) || false}
-                          onChange={(e) => handleBillingReadyChange(ticket._id, e.target.checked)}
-                          disabled={isBillingReadyByCurrentAdmin(ticket)}
-                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        {isBillingReadyByAnyAdmin(ticket) && (
-                          <div className="text-xs text-gray-500">
-                            <div>Ready by: {ticket.billingReadyBy?.name || 'Unknown'}</div>
-                            {ticket.billingReadyAt && (
-                              <div>{new Date(ticket.billingReadyAt).toLocaleDateString()}</div>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                    <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
+                      <input
+                        type="checkbox"
+                        checked={ticket.readyForBilling || false}
+                        onChange={(e) => handleBillingReadyChange(ticket._id, e.target.checked)}
+                        disabled={ticket.status !== 'resolved' || isBillingReadyByCurrentAdmin(ticket)}
+                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={ticket.status !== 'resolved' ? 'Ticket must be resolved first' : 'Mark as ready for billing'}
+                      />
                     </td>
                   </tr>
                   {viewingTicketId === ticket._id && (
@@ -482,6 +578,8 @@ const AdminSupportTickets = () => {
             <p className="text-gray-500">No support tickets found.</p>
           </div>
         )}
+        
+        {renderPagination(filteredTickets)}
       </div>
     </div>
   );

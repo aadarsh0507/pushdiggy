@@ -127,7 +127,7 @@ const AdminBilling = ({ onBillCreated }) => {
         cgstPercent: billForm.cgstPercent,
       });
       setShowPreview(true);
-      fetchResolvedTickets();
+      fetchResolvedTickets(); // Refresh resolved tickets to remove them from the list
       setSelectedTicketIds([]);
       setShowBillModal(false);
       setBillForm({

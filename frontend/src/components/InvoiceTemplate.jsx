@@ -30,25 +30,27 @@ const InvoiceTemplate = ({ billData }) => {
     @media print {
       @page {
         size: A4;
-        margin: 10mm;
+        margin: 15mm;
       }
       html, body {
         margin: 0 !important;
         padding: 0 !important;
         width: 210mm;
         height: 297mm;
+        font-size: 12px;
       }
       #invoice-content-to-print {
         width: 210mm !important;
         margin: 0 !important;
-        padding: 10mm !important;
+        padding: 15mm !important;
         box-sizing: border-box !important;
         background: white !important;
         border-radius: 0 !important;
         box-shadow: none !important;
+        page-break-after: always;
       }
       .print-table {
-        width: 100% !important; /* Ensure the main table takes full width */
+        width: 100% !important;
         border-collapse: collapse !important;
       }
       .print-table td {
@@ -67,44 +69,148 @@ const InvoiceTemplate = ({ billData }) => {
       .print-content td {
         page-break-inside: auto !important;
       }
-      /* Target the main content TD and its direct children divs for full width */
-      .print-content > tr > td[style*="vertical-align: top"] {
+      .content-below-header {
+        display: flex !important;
+        flex-direction: column !important;
         width: 100% !important;
-      }
-      .print-content > tr > td[style*="vertical-align: top"] > div {
-        width: 100% !important;
+        min-height: 0 !important;
       }
       .invoice-table {
-        width: 100% !important; /* Ensure the invoice items table takes full width */
+        width: 100% !important;
         page-break-inside: auto !important;
-      }
-      .invoice-table tr {
-        page-break-inside: avoid !important;
-      }
-      .footer {
-        page-break-inside: avoid !important;
-        page-break-before: auto !important;
-      }
-      .no-print {
-        display: none !important;
-      }
-      .invoice-table {
-        width: 100% !important; /* Redundant but good for specificity */
         font-size: 10px !important;
       }
       .invoice-table th, .invoice-table td {
-        padding: 6px 8px !important;
+        padding: 8px 6px !important;
+        font-size: 10px !important;
       }
       .summary-section {
         font-size: 11px !important;
       }
-      /* Ensure flex containers within table cells also take full width */
-      .print-content td > div {
-        width: 100% !important;
+      .footer {
+        page-break-inside: avoid !important;
+        page-break-before: auto !important;
+        margin-top: 20px !important;
+      }
+      .no-print {
+        display: none !important;
       }
       * {
         -webkit-print-color-adjust: exact !important;
         color-adjust: exact !important;
+      }
+      .flex {
+        display: flex !important;
+      }
+      .justify-between {
+        justify-content: space-between !important;
+      }
+      .items-center {
+        align-items: center !important;
+      }
+      .text-right {
+        text-align: right !important;
+      }
+      .text-left {
+        text-align: left !important;
+      }
+      .text-center {
+        text-align: center !important;
+      }
+      .font-bold {
+        font-weight: bold !important;
+      }
+      .font-semibold {
+        font-weight: 600 !important;
+      }
+      .border-b {
+        border-bottom: 1px solid #d1d5db !important;
+      }
+      .border {
+        border: 1px solid #d1d5db !important;
+      }
+      .bg-gray-100 {
+        background-color: #f3f4f6 !important;
+      }
+      .bg-gray-50 {
+        background-color: #f9fafb !important;
+      }
+      .text-gray-800 {
+        color: #1f2937 !important;
+      }
+      .text-gray-700 {
+        color: #374151 !important;
+      }
+      .text-gray-600 {
+        color: #4b5563 !important;
+      }
+      .text-sm {
+        font-size: 0.875rem !important;
+      }
+      .text-xs {
+        font-size: 0.75rem !important;
+      }
+      .text-xl {
+        font-size: 1.25rem !important;
+      }
+      .text-3xl {
+        font-size: 1.875rem !important;
+      }
+      .py-3 {
+        padding-top: 0.75rem !important;
+        padding-bottom: 0.75rem !important;
+      }
+      .px-4 {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+      }
+      .mt-6 {
+        margin-top: 1.5rem !important;
+      }
+      .mt-8 {
+        margin-top: 2rem !important;
+      }
+      .pb-6 {
+        padding-bottom: 1.5rem !important;
+      }
+      .p-4 {
+        padding: 1rem !important;
+      }
+      .w-1/2 {
+        width: 50% !important;
+      }
+      .h-24 {
+        height: 6rem !important;
+      }
+      .min-w-full {
+        min-width: 100% !important;
+      }
+      .space-y-1 > * + * {
+        margin-top: 0.25rem !important;
+      }
+      .pt-2 {
+        padding-top: 0.5rem !important;
+      }
+      .pr-4 {
+        padding-right: 1rem !important;
+      }
+      .pl-4 {
+        padding-left: 1rem !important;
+      }
+      .mb-2 {
+        margin-bottom: 0.5rem !important;
+      }
+      .break-words {
+        word-break: break-word !important;
+      }
+      .flex-col {
+        flex-direction: column !important;
+      }
+      .items-center {
+        align-items: center !important;
+      }
+      .justify-center {
+        justify-content: center !important;
       }
     }
   `;
@@ -115,23 +221,29 @@ const InvoiceTemplate = ({ billData }) => {
       style={{
         width: '210mm',
         boxSizing: 'border-box',
- minHeight: '297mm',
-        backgroundColor: 'white'
+        backgroundColor: 'white',
+        margin: '0 auto',
+        padding: '15mm'
       }}
       id="invoice-content-to-print"
     >
       <style>{printStyles}</style>
       
-      <table className="print-table">
-        <thead className="print-header" style={{ minHeight: '277mm' }}>
+      <table className="print-table" style={{ width: '100%' }}>
+        <thead className="print-header">
           <tr>
             <td>
               <div className="flex justify-between items-center border-b pb-6 border-gray-300">
                 <div className="flex items-center gap-4">
-                  <img src={logo} alt="Logo" className="h-24"/>
+                  <img src={logo} alt="Logo" className="h-24" style={{ height: '6rem' }}/>
                   <div>
-                    <h1 className="text-xl font-bold text-gray-800"><span style={{ color: '#2C3E50' }}>PUSH</span> <span style={{color: '	#8B735B'}}>DIGGY</span></h1>
-                    <p className="text-sm text-gray-600"><span style={{ color: '#2C3E50' }}>Solutions</span></p>
+                    <h1 className="text-xl font-bold text-gray-800">
+                      <span style={{ color: '#2C3E50' }}>PUSH</span> 
+                      <span style={{color: '#8B735B'}}>DIGGY</span>
+                    </h1>
+                    <p className="text-sm text-gray-600">
+                      <span style={{ color: '#2C3E50' }}>Solutions</span>
+                    </p>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -146,9 +258,12 @@ const InvoiceTemplate = ({ billData }) => {
         </thead>
         <tbody className="print-content">
           <tr>
-            <td style={{ verticalAlign: 'top', height: '100%' }}>
-              {/* Main Content */}
-              <div className="content-below-header" style={{ minHeight: '180mm', display: 'flex', flexDirection: 'column', width: '100%' }}> {/* Added width: '100%' and class 'content-below-header' */}
+            <td style={{ verticalAlign: 'top' }}>
+              <div className="content-below-header" style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                width: '100%'
+              }}>
                 <div className="flex justify-between items-start mt-6">
                   <div className="w-1/2">
                     <p className="text-sm font-semibold text-gray-800">Date: {formatDate(billData.date)}</p>
@@ -166,16 +281,19 @@ const InvoiceTemplate = ({ billData }) => {
                     </h3>
                   </div>
                 </div>
+                
                 <div className="mt-8 border-b pb-6 border-gray-200">
                   <p className="text-base font-semibold text-gray-800">To</p>
                   <p className="text-sm text-gray-700 mt-2">{billData.billTo?.name}</p>
                   <p className="text-sm text-gray-700 mt-1">{billData.billTo?.address}</p>
                   <p className="text-sm text-gray-700 mt-1">GSTIN: {billData.billTo?.gstin}</p>
                 </div>
+                
                 <div className="mt-8">
                   <p className="text-sm font-semibold text-gray-800">Subject: {billData.subject || "N/A"}</p>
                 </div>
-                <div className="mt-8 border border-gray-300 rounded-lg overflow-hidden" style={{ width: '100%' }}> {/* Added width: '100%' */}
+                
+                <div className="mt-8 border border-gray-300 rounded-lg overflow-hidden" style={{ width: '100%' }}>
                   <table className="min-w-full bg-white invoice-table">
                     <thead className="bg-gray-100">
                       <tr>
@@ -202,29 +320,31 @@ const InvoiceTemplate = ({ billData }) => {
                     <p className="text-xl font-bold text-gray-800 pt-2">Grand Total: ₹{parseFloat(billData.grandTotal || 0).toFixed(2)}</p>
                   </div>
                 </div>
-                
-                {/* Spacer to push footer down */}
-                <div style={{ flex: 1, minHeight: '40mm' }}></div>
               </div>
               
-              {/* FOOTER */}
-              <div className="flex justify-between items-start mt-8 footer">
-                <div className="text-sm text-gray-700 w-1/2 pr-4">
-                  <strong>
-                    <h4 className="font-semibold text-gray-800 mb-2">Bank Transfer Details</h4>
-                    <p className="break-words">Account Name: {billData.bankDetails?.accountName}</p>
-                    <p>A/c No: {billData.bankDetails?.accountNumber}</p>
-                    <p>IFSC Code: {billData.bankDetails?.ifscCode}</p>
-                    <p>Bank: {billData.bankDetails?.bankName}</p>
-                    <p>Branch: {billData.bankDetails?.branch}</p>
-                  </strong>
-                </div>
-                <div className="text-center text-sm text-gray-700 w-1/2 pl-4 flex flex-col items-center justify-center">
-                  <div style={{ marginTop: '20px' }}>
-                    <p>For PD Solutions</p>
-                    <p style={{ marginTop: '40px' }}>Authorized Signature</p>
-                  </div>
-                </div>
+              <div className="mt-8 footer">
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <tr>
+                    <td style={{ width: '50%', verticalAlign: 'top', paddingRight: '1rem' }}>
+                      <div className="text-sm text-gray-700">
+                        <strong>
+                          <h4 className="font-semibold text-gray-800 mb-2">Bank Transfer Details</h4>
+                          <p className="break-words">Account Name: {billData.bankDetails?.accountName}</p>
+                          <p>A/c No: {billData.bankDetails?.accountNumber}</p>
+                          <p>IFSC Code: {billData.bankDetails?.ifscCode}</p>
+                          <p>Bank: {billData.bankDetails?.bankName}</p>
+                          <p>Branch: {billData.bankDetails?.branch}</p>
+                        </strong>
+                      </div>
+                    </td>
+                    <td style={{ width: '50%', verticalAlign: 'top', paddingLeft: '1rem', textAlign: 'center' }}>
+                      <div className="text-sm text-gray-700" style={{ marginTop: '20px' }}>
+                        <p style={{ margin: '0', lineHeight: '1.5' }}>For PD Solutions</p>
+                        <p style={{ margin: '80px 0 0 0', lineHeight: '1.5' }}>Authorized Signature</p>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
               </div>
             </td>
           </tr>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Star, Filter, Camera, Printer, Globe, TrendingUp, Smartphone, Briefcase } from 'lucide-react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { CheckCircle, Star, Camera, Printer, Globe, TrendingUp, Smartphone, Briefcase } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // Import useAuth
 import api from '../api/api';
 
@@ -8,9 +8,6 @@ import api from '../api/api';
 
 const Services = () => {
   const [services, setServices] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [showFilters, setShowFilters] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const { user } = useAuth(); // Use the useAuth hook
@@ -26,34 +23,6 @@ const Services = () => {
     };
     fetchServices();
   }, []);
-
-  // Handle URL parameters for category filtering
-  useEffect(() => {
-    const categoryFromUrl = searchParams.get('category');
-    if (categoryFromUrl) {
-      setSelectedCategory(categoryFromUrl);
-    } else {
-      setSelectedCategory('All');
-    }
-  }, [searchParams]);
-
-  const categories = ['All', ...new Set(services.map(service => service.category || 'Other'))];
-
-  const filteredServices = selectedCategory === 'All'
-    ? services
-    : services.filter(service => service.category === selectedCategory);
-
-  const getIcon = (iconName) => {
-    const iconMap = {
-      'Cloud': '☁️',
-      'Shield': '🛡️',
-      'BarChart3': '📊',
-      'Users': '👥',
-      'Settings': '⚙️',
-      'Code': '💻'
-    };
-    return iconMap[iconName] || '🔧';
-  };
 
   // Service categories with icons and descriptions
   const serviceCategories = [
@@ -107,17 +76,6 @@ const Services = () => {
     }
   ];
 
-  // Handle category selection
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
-    if (category === 'All') {
-      setSearchParams({});
-    } else {
-      setSearchParams({ category });
-    }
-  };
-
-
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -159,116 +117,6 @@ const Services = () => {
               </button>
             ))}
           </div>
-        </div>
-      </section>
-
-
-      <section id="services-section" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Filter Section */}
-          <div className="mb-12">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-0">
-                {selectedCategory === 'All' ? 'All Services' : `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Services`}
-              </h2>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 sm:hidden"
-              >
-                <Filter className="h-4 w-4" />
-                <span>Filter Services</span>
-              </button>
-            </div>
-
-           
-            <div className="hidden sm:flex flex-wrap gap-4">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => handleCategorySelect(category)}
-                  className={`px-6 py-2 rounded-full font-medium transition-colors duration-200 ${
-                    selectedCategory === category
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-
-        
-            {showFilters && (
-              <div className="sm:hidden flex flex-wrap gap-2 mt-4">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => {
-                      handleCategorySelect(category);
-                      setShowFilters(false);
-                    }}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                      selectedCategory === category
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-         
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredServices.map((service) => (
-              <div key={service.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                <div className="p-8">
-                  <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mx-auto mb-6">
-                    <span className="text-2xl">{getIcon(service.icon)}</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">{service.name}</h3>
-                  <p className="text-gray-600 mb-6 text-center">{service.description}</p>
-                  
-                  <div className="text-center mb-6">
-                    <div className="text-3xl font-bold text-blue-600">{service.price}</div>
-                    <div className="text-sm text-gray-500">Starting from</div>
-                  </div>
-
-                  <div className="space-y-3 mb-8">
-                    {service.features.map((feature, index) => (
-                      <div key={index} className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
-                        <span className="text-gray-600">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="space-y-3">
-                    <button className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-300 font-semibold">
-                      Get Started
-                    </button>
-                    <button className="w-full border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors duration-300">
-                      Learn More
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* {filteredServices.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-xl text-gray-600">No services found for the selected category.</p>
-              <button
-                onClick={() => handleCategorySelect('All')}
-                className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300"
-              >
-                View All Services
-              </button>
-            </div>
-          )} */}
         </div>
       </section>
 
@@ -334,11 +182,11 @@ const Services = () => {
           <p className="text-xl mb-8 text-blue-100 max-w-2xl mx-auto">
             Contact our experts today to discuss your requirements and find the perfect solution for your business.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors duration-300">
-              Request Quote
-            </button>
-            <button className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors duration-300">
+          <div className="flex justify-center">
+            <button 
+              onClick={() => navigate('/contact')}
+              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors duration-300"
+            >
               Schedule Consultation
             </button>
           </div>

@@ -16,10 +16,16 @@ const Navbar = () => {
     setIsOpen(false);
   };
 
+  const handleHomeClick = () => {
+    // Navigate to home page when Home is clicked
+    navigate('/home');
+    setIsOpen(false);
+  };
+
   const isActive = (path) => location.pathname === path;
 
   const publicLinks = [
-    { to: '/', label: 'Home' },
+    { to: '/home', label: 'Home', onClick: handleHomeClick },
     { to: '/about', label: 'About' },
     { to: '/services', label: 'Services' },
     { to: '/contact', label: 'Contact' }
@@ -40,17 +46,31 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {publicLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`transition-colors duration-200 ${
-                  isActive(link.to)
-                    ? 'text-blue-600 font-semibold'
-                    : 'text-gray-700 hover:text-blue-600'
-                }`}
-              >
-                {link.label}
-              </Link>
+              link.onClick ? (
+                <button
+                  key={link.to}
+                  onClick={link.onClick}
+                  className={`transition-colors duration-200 ${
+                    isActive(link.to)
+                      ? 'text-blue-600 font-semibold'
+                      : 'text-gray-700 hover:text-blue-600'
+                  }`}
+                >
+                  {link.label}
+                </button>
+              ) : (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`transition-colors duration-200 ${
+                    isActive(link.to)
+                      ? 'text-blue-600 font-semibold'
+                      : 'text-gray-700 hover:text-blue-600'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
             
             {isAuthenticated ? (
@@ -61,10 +81,6 @@ const Navbar = () => {
                 >
                   Dashboard
                 </Link>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <User className="h-4 w-4" />
-                  <span>{user?.name}</span>
-                </div>
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-1 text-red-600 hover:text-red-700 transition-colors duration-200"
@@ -99,26 +115,39 @@ const Navbar = () => {
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
               {publicLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={closeMenu}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
-                    isActive(link.to)
-                      ? 'text-blue-600 bg-blue-50'
-                      : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {link.label}
-                </Link>
+                link.onClick ? (
+                  <button
+                    key={link.to}
+                    onClick={() => {
+                      link.onClick();
+                      closeMenu();
+                    }}
+                    className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+                      isActive(link.to)
+                        ? 'text-blue-600 bg-blue-50'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {link.label}
+                  </button>
+                ) : (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={closeMenu}
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+                      isActive(link.to)
+                        ? 'text-blue-600 bg-blue-50'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                )
               ))}
               
               {isAuthenticated ? (
                 <div className="pt-4 border-t">
-                  <div className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600">
-                    <User className="h-4 w-4" />
-                    <span>{user?.name}</span>
-                  </div>
                   <Link
                     to={user?.role === 'admin' ? '/admin-dashboard' : '/client-dashboard'}
                     onClick={closeMenu}

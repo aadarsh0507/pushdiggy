@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Star, Users, Award, TrendingUp, Camera, Printer, Globe, Smartphone, Briefcase } from 'lucide-react';
 import ConfettiSpray from "../components/ConfettiRain";
 import api from '../api/api';
@@ -7,7 +7,18 @@ import api from '../api/api';
 const Home = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showConfetti, setShowConfetti] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if user came from splash screen
+  useEffect(() => {
+    const fromSplash = sessionStorage.getItem('fromSplash');
+    if (fromSplash === 'true') {
+      setShowConfetti(true);
+      sessionStorage.removeItem('fromSplash'); // Clear the flag
+    }
+  }, []);
 
   // Fetch services from backend
   useEffect(() => {
@@ -114,7 +125,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
-      <ConfettiSpray />
+      {showConfetti && <ConfettiSpray />}
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

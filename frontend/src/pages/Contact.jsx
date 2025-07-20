@@ -121,7 +121,14 @@ const Contact = () => {
                     <h3 className="text-lg font-semibold text-gray-900">
                       Email
                     </h3>
-                    <p className="text-gray-600">pushdiggy@gmail.com</p>
+                    <a 
+                      href="https://mail.google.com/mail/?view=cm&fs=1&to=pushdiggy@gmail.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline transition-colors duration-200"
+                    >
+                      pushdiggy@gmail.com
+                    </a>
                     <p className="text-sm text-gray-500">
                       We'll respond within 24 hours
                     </p>

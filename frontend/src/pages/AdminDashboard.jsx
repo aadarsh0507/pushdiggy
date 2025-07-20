@@ -7,8 +7,10 @@ import AdminSupportTickets from '../components/AdminSupportTickets';
 import AdminBilling from '../components/AdminBilling';
 import AdminBills from '../components/AdminBills'; // Import the new AdminBills component
 import api from '../api/api';
+import { useAuth } from '../context/AuthContext';
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [services, setServices] = useState([]);
@@ -22,6 +24,10 @@ const AdminDashboard = () => {
   const [editingService, setEditingService] = useState(null);
   const [supportTicketsData, setSupportTicketsData] = useState([]);
   const [bills, setBills] = useState([]); // State to hold bill data
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Service form state
   const [serviceForm, setServiceForm] = useState({
@@ -87,17 +93,15 @@ const AdminDashboard = () => {
   // Fetch contact messages from backend
  useEffect(() => {
     const fetchContactMessages = async () => {
-      if (activeTab === 'messages') {
-        try {
-          const res = await api.get('/contact/messages');
-          setContactMessages(res.data);
-        } catch (err) {
-          console.error('Error fetching contact messages:', err);
-        }
+      try {
+        const res = await api.get('/contact/messages');
+        setContactMessages(res.data);
+      } catch (err) {
+        console.error('Error fetching contact messages:', err);
       }
     };
     fetchContactMessages();
-  }, [activeTab]); // Fetch messages when the activeTab changes to 'messages'
+  }, []); // Fetch messages when component mounts
 
   const deleteMessage = async (messageId) => {
     try {
@@ -119,11 +123,11 @@ const AdminDashboard = () => {
   const stats = {
     totalClients: clients.length,
     activeClients: clients.filter(c => c.status === 'active').length,
-    totalMessages: 0,
-    newMessages: 0,
+    totalMessages: contactMessages.length,
+    newMessages: contactMessages.filter(msg => msg.status === 'new').length,
     totalServices: services.length,
-  supportTickets: supportTicketsData.length // Use the length of the fetched data
-};
+    supportTickets: supportTicketsData.length // Use the length of the fetched data
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -246,13 +250,110 @@ const AdminDashboard = () => {
   };
 
   const handleToggleAMC = async (client) => {
-    const newAmcStatus = !client.amc;
     try {
-      await api.put(`/clients/${client._id}`, { amc: newAmcStatus });
-      setClients(clients.map(c => c._id === client._id ? { ...client, amc: newAmcStatus } : c));
+      const res = await api.put(`/clients/${client._id}/toggle-amc`);
+      setClients(clients.map(c => c._id === client._id ? res.data : c));
     } catch (err) {
-      console.error('Error updating AMC status:', err);
+      console.error('Error toggling AMC:', err);
     }
+  };
+
+  // Pagination functions
+  const getCurrentItems = (items) => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return items.slice(indexOfFirstItem, indexOfLastItem);
+  };
+
+  const getTotalPages = (items) => {
+    return Math.ceil(items.length / itemsPerPage);
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const renderPagination = (totalItems) => {
+    const totalPages = getTotalPages(totalItems);
+    if (totalPages <= 1) return null;
+
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="flex items-center justify-between px-6 py-3 bg-white border-t border-gray-200">
+        <div className="flex items-center text-sm text-gray-700">
+          <span>
+            Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems.length)} of {totalItems.length} results
+          </span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          
+          {startPage > 1 && (
+            <>
+              <button
+                onClick={() => handlePageChange(1)}
+                className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                1
+              </button>
+              {startPage > 2 && <span className="px-2 text-gray-500">...</span>}
+            </>
+          )}
+
+          {pageNumbers.map(number => (
+            <button
+              key={number}
+              onClick={() => handlePageChange(number)}
+              className={`px-3 py-1 text-sm font-medium rounded-md ${
+                currentPage === number
+                  ? 'text-white bg-blue-600 border border-blue-600'
+                  : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {number}
+            </button>
+          ))}
+
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && <span className="px-2 text-gray-500">...</span>}
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    );
   };
 
   const renderOverview = () => (
@@ -291,8 +392,9 @@ const AdminDashboard = () => {
                 <MessageSquare className="h-6 w-6 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">New Messages</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.newMessages}</p>
+                <p className="text-sm font-medium text-gray-600">Total Messages</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalMessages}</p>
+                <p className="text-xs text-gray-500">{stats.newMessages} new</p>
               </div>
             </div>
           </div>
@@ -315,7 +417,26 @@ const AdminDashboard = () => {
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Messages</h3>
               <div className="space-y-4">
-                <p className="text-gray-500">No messages to display.</p>
+                {contactMessages.length > 0 ? (
+                  // Sort by date descending and take the last 3
+                  contactMessages.slice() // Create a shallow copy before sorting
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sort by creation date descending
+                    .slice(0, 3) // Take the first 3 after sorting
+                    .map(message => (
+                      <div key={message._id} className="border-b pb-4 last:border-b-0 last:pb-0">
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm font-medium text-gray-900">{message.subject}</p>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(message.status)}`}>
+                            {message.status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600">from {message.name}</p>
+                        <p className="text-xs text-gray-500 mt-1">{new Date(message.createdAt).toLocaleString()}</p>
+                      </div>
+                    ))
+                ) : (
+                  <p className="text-gray-500">No messages to display.</p>
+                )}
               </div>
             </div>
           </div>
@@ -404,6 +525,7 @@ const AdminDashboard = () => {
           <table id="client-table" className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
@@ -416,13 +538,14 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {clients
-                .filter(client => filterStatus === 'All' || client.status === filterStatus)
-                .map((client) => (
+              {getCurrentItems(clients
+                .filter(client => filterStatus === 'All' || client.status === filterStatus))
+                .map((client, index) => (
                   <tr 
                     key={client._id}
                     className="hover:bg-gray-50"
                   >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{client.name}</div>
@@ -502,6 +625,7 @@ const AdminDashboard = () => {
           </table>
         </div>
       </div>
+      {renderPagination(clients.filter(client => filterStatus === 'All' || client.status === filterStatus))}
 
       {isSidebarOpen && selectedClient && (
         <div className="fixed inset-y-0 right-0 w-full md:w-1/3 bg-white shadow-lg z-50 overflow-y-auto">
@@ -783,20 +907,29 @@ const AdminDashboard = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {contactMessages.length > 0 ? (
-                contactMessages.map((message) => (
+                getCurrentItems(contactMessages).map((message, index) => (
                   <tr key={message._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{((currentPage - 1) * itemsPerPage) + index + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{message.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{message.subject}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(message.createdAt).toLocaleString()}
+                      {new Date(message.createdAt).toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex space-x-2">
                       <button
@@ -826,6 +959,7 @@ const AdminDashboard = () => {
           </table>
         </div>
       </div>
+      {renderPagination(contactMessages)}
     </div>
   );
   
@@ -889,17 +1023,22 @@ const AdminDashboard = () => {
   };
 
   // Render the Bills section (using the new component)
-  const renderBills = () => {
-    // Pass the fetched bills data to the AdminBills component
-    return <AdminBills bills={bills} clients={clients} setBills={setBills} />;
-  };
+  const renderBills = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">Bills</h2>
+      <AdminBills bills={getCurrentItems(bills)} clients={clients} setBills={setBills} />
+      {renderPagination(bills)}
+    </div>
+  );
 
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome {user?.name || 'Admin'}
+          </h1>
           <p className="text-gray-600">Manage your clients, services, and business operations</p>
         </div>
 
@@ -939,7 +1078,7 @@ const AdminDashboard = () => {
           {activeTab === 'services' && renderServices()}
           {activeTab === 'messages' && renderMessages()}
           {activeTab === 'support' && <AdminSupportTickets />}
-          {activeTab === 'billing' && <AdminBilling clients={clients} />}
+          {activeTab === 'billing' && <AdminBilling clients={clients} onBillCreated={fetchBills} />}
           {activeTab === 'bills' && renderBills()} {/* Render the Bills section */}
         </div>
         {renderMessageDetails()} {/* Render the message details modal/sidebar */}
