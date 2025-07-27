@@ -6,6 +6,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import AdminSupportTickets from '../components/AdminSupportTickets';
 import AdminBilling from '../components/AdminBilling';
 import AdminBills from '../components/AdminBills'; // Import the new AdminBills component
+import AdminUsers from '../components/AdminUsers'; // Import the new AdminUsers component
 import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -252,7 +253,12 @@ const AdminDashboard = () => {
   const handleToggleAMC = async (client) => {
     try {
       const res = await api.put(`/clients/${client._id}/toggle-amc`);
-      setClients(clients.map(c => c._id === client._id ? res.data : c));
+      // Update the client with the new AMC status
+      setClients(clients.map(c => 
+        c._id === client._id 
+          ? { ...c, amc: res.data.client.amc }
+          : c
+      ));
     } catch (err) {
       console.error('Error toggling AMC:', err);
     }
@@ -497,22 +503,65 @@ const AdminDashboard = () => {
         </div>
         <button
           onClick={() => {
-            const table = document.getElementById('client-table');
-            if (table) {
-              const printWindow = window.open('', '', 'height=600,width=800');
-              printWindow.document.write('<html><head><title>Filtered Client List</title>');
-              printWindow.document.write('<style>');
-              printWindow.document.write('table { border-collapse: collapse; width: 100%; }');
-              printWindow.document.write('th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }');
-              printWindow.document.write('th { background-color: #f2f2f2; }');
-              printWindow.document.write('</style>');
-              printWindow.document.write('</head><body>');
-              printWindow.document.write('<h2>Client List (' + (filterStatus === 'All' ? 'All' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)) + ' Clients)</h2>');
-              printWindow.document.write(table.outerHTML);
-              printWindow.document.write('</body></html>');
-              printWindow.document.close();
-              printWindow.print();
-            }
+            const filteredClients = clients.filter(client => filterStatus === 'All' || client.status === filterStatus);
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>Filtered Client List</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write('body { font-family: Arial, sans-serif; margin: 20px; }');
+            printWindow.document.write('table { border-collapse: collapse; width: 100%; margin-top: 20px; }');
+            printWindow.document.write('th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }');
+            printWindow.document.write('th { background-color: #f2f2f2; font-weight: bold; }');
+            printWindow.document.write('h2 { color: #333; margin-bottom: 10px; }');
+            printWindow.document.write('.status-active { color: green; }');
+            printWindow.document.write('.status-inactive { color: red; }');
+            printWindow.document.write('.status-enquiry { color: blue; }');
+            printWindow.document.write('.amc-yes { color: green; font-weight: bold; }');
+            printWindow.document.write('.amc-no { color: red; }');
+            printWindow.document.write('</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write('<h2>Push Diggy - Client List (' + (filterStatus === 'All' ? 'All' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)) + ' Clients)</h2>');
+            printWindow.document.write('<p>Generated on: ' + new Date().toLocaleString() + '</p>');
+            printWindow.document.write('<table>');
+            printWindow.document.write('<thead>');
+            printWindow.document.write('<tr>');
+            printWindow.document.write('<th>S.No</th>');
+            printWindow.document.write('<th>Client Name</th>');
+            printWindow.document.write('<th>Email</th>');
+            printWindow.document.write('<th>Company</th>');
+            printWindow.document.write('<th>Phone</th>');
+            printWindow.document.write('<th>Status</th>');
+            printWindow.document.write('<th>Join Date</th>');
+            printWindow.document.write('<th>AMC</th>');
+            printWindow.document.write('<th>Inactive Date</th>');
+            printWindow.document.write('</tr>');
+            printWindow.document.write('</thead>');
+            printWindow.document.write('<tbody>');
+            
+            filteredClients.forEach((client, index) => {
+              const statusClass = client.status ? `status-${client.status}` : 'status-unknown';
+              const amcClass = client.amc ? 'amc-yes' : 'amc-no';
+              const amcText = client.amc ? 'Yes' : 'No';
+              const statusText = client.status ? client.status.charAt(0).toUpperCase() + client.status.slice(1) : 'Unknown';
+              
+              printWindow.document.write('<tr>');
+              printWindow.document.write('<td>' + (index + 1) + '</td>');
+              printWindow.document.write('<td>' + (client.name || 'N/A') + '</td>');
+              printWindow.document.write('<td>' + (client.email || 'N/A') + '</td>');
+              printWindow.document.write('<td>' + (client.company || 'N/A') + '</td>');
+              printWindow.document.write('<td>' + (client.phone || 'N/A') + '</td>');
+              printWindow.document.write('<td class="' + statusClass + '">' + statusText + '</td>');
+              printWindow.document.write('<td>' + (client.createdAt ? new Date(client.createdAt).toLocaleDateString() : 'N/A') + '</td>');
+              printWindow.document.write('<td class="' + amcClass + '">' + amcText + '</td>');
+              printWindow.document.write('<td>' + (client.inactiveDate ? new Date(client.inactiveDate).toLocaleDateString() : '-') + '</td>');
+              printWindow.document.write('</tr>');
+            });
+            
+            printWindow.document.write('</tbody>');
+            printWindow.document.write('</table>');
+            printWindow.document.write('<p style="margin-top: 20px; font-size: 12px; color: #666;">Total Clients: ' + filteredClients.length + '</p>');
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
           }}
           className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors duration-200 text-sm font-medium"
         >
@@ -572,7 +621,7 @@ const AdminDashboard = () => {
                         <ToggleLeft className="h-5 w-5" />
                       )}
                       <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
-                        {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
+                        {client.status ? client.status.charAt(0).toUpperCase() + client.status.slice(1) : 'Unknown'}
                       </span>
                     </button>
                      
@@ -1052,6 +1101,7 @@ const AdminDashboard = () => {
               { key: 'support', label: 'Support Tickets', icon: MessageSquare }, // Reusing MessageSquare for now
               { key: 'billing', label: 'Billing', icon: CreditCard },
               { key: 'bills', label: 'Bills', icon: CreditCard }, // New tab for Bills
+              { key: 'admin-users', label: 'Admin Users', icon: Users }, // New tab for Admin Users
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -1080,6 +1130,7 @@ const AdminDashboard = () => {
           {activeTab === 'support' && <AdminSupportTickets />}
           {activeTab === 'billing' && <AdminBilling clients={clients} onBillCreated={fetchBills} />}
           {activeTab === 'bills' && renderBills()} {/* Render the Bills section */}
+          {activeTab === 'admin-users' && <AdminUsers />} {/* Render the Admin Users section */}
         </div>
         {renderMessageDetails()} {/* Render the message details modal/sidebar */}
       </div>

@@ -68,12 +68,18 @@ const AdminBilling = ({ onBillCreated }) => {
     const cgstAmount = (subtotal * (parseFloat(billForm.cgstPercent) || 0)) / 100;
     const grandTotal = subtotal + sgstAmount + cgstAmount;
 
+    // Round off all amounts to nearest rupee
+    const roundedSubtotal = Math.round(subtotal);
+    const roundedSgst = Math.round(sgstAmount);
+    const roundedCgst = Math.round(cgstAmount);
+    const roundedGrandTotal = Math.round(grandTotal);
+
     setBillForm(prev => ({
       ...prev,
-      subtotal: subtotal.toFixed(2),
-      sgst: sgstAmount.toFixed(2),
-      cgst: cgstAmount.toFixed(2),
-      grandTotal: grandTotal.toFixed(2),
+      subtotal: roundedSubtotal.toFixed(2),
+      sgst: roundedSgst.toFixed(2),
+      cgst: roundedCgst.toFixed(2),
+      grandTotal: roundedGrandTotal.toFixed(2),
     }));
   }, [billForm.items, billForm.sgstPercent, billForm.cgstPercent]);
 

@@ -23,6 +23,8 @@ const AdminSupportTickets = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  
+
 
   useEffect(() => {
     // Fetch tickets
@@ -116,8 +118,15 @@ const AdminSupportTickets = () => {
   };
 
   const handleEditTicket = (ticketId) => {
-    setEditingTicketId(ticketId);
     const ticketToEdit = tickets.find(ticket => ticket._id === ticketId);
+    
+    // Prevent editing if ticket is ready for billing
+    if (ticketToEdit.readyForBilling) {
+      alert('Cannot edit ticket that is ready for billing. The ticket is locked for modifications.');
+      return;
+    }
+    
+    setEditingTicketId(ticketId);
     setEditFormData({
       resolvedBy: ticketToEdit.resolvedBy || '',
       resolutionDetails: ticketToEdit.resolutionDetails || '',
@@ -129,9 +138,26 @@ const AdminSupportTickets = () => {
 
   const handleSaveEdit = async (ticketId) => {
     try {
+      // Validate required fields when status is resolved
+      if (editFormData.resolutionDetailsRequired) {
+        if (!editFormData.resolvedBy) {
+          alert('Please select who resolved the ticket.');
+          return;
+        }
+        if (!editFormData.resolutionDetails || editFormData.resolutionDetails.trim() === '') {
+          alert('Please provide resolution details.');
+          return;
+        }
+      }
+      
       await handleUpdateTicket(ticketId, editFormData);
       setEditingTicketId(null);
       setEditFormData({});
+      
+      // Show success message if resolution was completed
+      if (editFormData.resolutionDetailsRequired) {
+        alert('Resolution details saved successfully. You can now mark the ticket as ready for billing.');
+      }
     } catch (err) {
       console.error(`Error saving ticket ${ticketId}:`, err);
     }
@@ -173,13 +199,26 @@ const AdminSupportTickets = () => {
 
  const ticketToUpdate = tickets.find(ticket => ticket._id === ticketId);
 
- if (isChecked && ticketToUpdate.status === 'resolved') {
- if (!ticketToUpdate.resolvedBy || !ticketToUpdate.resolutionDetails) {
-      alert('Please fill in "Resolved By" and "Resolution Details" before marking as Ready for Billing.');
-      // Prevent the checkbox from being checked visually
-      return;
-    }
-  }
+ // Check if trying to mark as ready for billing
+ if (isChecked) {
+   // Check if ticket is resolved
+   if (ticketToUpdate.status !== 'resolved') {
+     alert('Ticket must be resolved before marking as Ready for Billing.');
+     return;
+   }
+   
+   // Check if resolvedBy is filled
+   if (!ticketToUpdate.resolvedBy) {
+     alert('Please fill in "Resolved By" before marking as Ready for Billing.');
+     return;
+   }
+   
+   // Check if resolutionDetails is filled
+   if (!ticketToUpdate.resolutionDetails || ticketToUpdate.resolutionDetails.trim() === '') {
+     alert('Please fill in "Resolution Details" before marking as Ready for Billing.');
+     return;
+   }
+ }
 
  try {
    console.log('Sending request with:', { ticketId, adminId: user.id });
@@ -190,11 +229,17 @@ const AdminSupportTickets = () => {
    console.log('Response received:', response.data);
 
    // Update the ticket in state with the new data
+   const updatedTicket = response.data;
    setTickets(prevTickets =>
      prevTickets.map(ticket =>
-       ticket._id === ticketId ? response.data : ticket
+       ticket._id === ticketId ? updatedTicket : ticket
      )
    );
+
+   // Show success message
+   if (isChecked) {
+     alert('Ticket marked as ready for billing. It will now appear in the billing screen and is locked for modifications.');
+   }
  } catch (error) {
    console.error('Error toggling billing ready status:', error);
    console.error('Error response:', error.response?.data);
@@ -208,10 +253,12 @@ const AdminSupportTickets = () => {
    return ticket.billingReadyBy && ticket.billingReadyBy._id === user.id;
  };
 
- // Helper function to check if any admin has marked this ticket as billing ready
- const isBillingReadyByAnyAdmin = (ticket) => {
-   return ticket.readyForBilling && ticket.billingReadyBy;
- };
+   // Helper function to check if any admin has marked this ticket as billing ready
+  const isBillingReadyByAnyAdmin = (ticket) => {
+    return ticket.readyForBilling && ticket.billingReadyBy;
+  };
+
+
 
   // Pagination functions
   const getCurrentItems = (items) => {
@@ -316,6 +363,8 @@ const AdminSupportTickets = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Support Tickets</h1>
 
+
+
       {/* Wrap filter section, table section, and no tickets message in a single parent div */}
       <div>
       {editingTicketId && (
@@ -323,12 +372,15 @@ const AdminSupportTickets = () => {
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Ticket</h3>
             <div className="mb-4">
-              <label htmlFor="resolvedBy" className="block text-sm font-medium text-gray-700">Resolved By</label>
+              <label htmlFor="resolvedBy" className="block text-sm font-medium text-gray-700">
+                Resolved By <span className="text-red-500">*</span>
+              </label>
               <select
                 id="resolvedBy"
                 name="resolvedBy"
                 value={editFormData.resolvedBy}
                 onChange={(e) => setEditFormData({ ...editFormData, resolvedBy: e.target.value })}
+                required={editFormData.resolutionDetailsRequired}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               >
                 <option value="">Select Admin</option>
@@ -338,14 +390,17 @@ const AdminSupportTickets = () => {
               </select>
             </div>
             <div className="mb-4">
-              <label htmlFor="resolutionDetails" className="block text-sm font-medium text-gray-700">Resolution Details</label>
+              <label htmlFor="resolutionDetails" className="block text-sm font-medium text-gray-700">
+                Resolution Details <span className="text-red-500">*</span>
+              </label>
               <textarea
                 id="resolutionDetails"
                 name="resolutionDetails"
                 rows="3"
                 value={editFormData.resolutionDetails}
                 onChange={(e) => setEditFormData({ ...editFormData, resolutionDetails: e.target.value })}
- required={editFormData.resolutionDetailsRequired}
+                required={editFormData.resolutionDetailsRequired}
+                placeholder="Please provide detailed resolution information..."
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               ></textarea>
             </div>
@@ -437,7 +492,7 @@ const AdminSupportTickets = () => {
               <tr>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket #</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket NO</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -450,9 +505,18 @@ const AdminSupportTickets = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {getCurrentItems(filteredTickets).map((ticket, index) => (
                 <React.Fragment key={ticket._id}>
-                  <tr className="hover:bg-gray-50">
+                  <tr className={`hover:bg-gray-50 ${ticket.readyForBilling ? 'bg-green-50' : ''}`}>
                     <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{((currentPage - 1) * itemsPerPage) + index + 1}</td>
-                    <td className="px-3 py-4 text-sm font-medium text-gray-900 max-w-xs truncate" title={ticket.subject}>{ticket.subject}</td>
+                    <td className="px-3 py-4 text-sm font-medium text-gray-900 max-w-xs truncate" title={ticket.subject}>
+                      <div className="flex items-center space-x-2">
+                        <span>{ticket.subject}</span>
+                        {ticket.readyForBilling && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Ready for Billing
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{ticket.ticketNumber}</td>
                     <td className="px-3 py-4 text-sm text-gray-900 max-w-32 truncate" title={ticket.clientId?.name || 'N/A'}>
                       {ticket.clientId?.name || 'N/A'}
@@ -466,11 +530,14 @@ const AdminSupportTickets = () => {
                     <td className="px-3 py-4 text-sm text-gray-500">
                       <select
                         value={ticket.status}
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const newStatus = e.target.value;
-                          handleUpdateTicket(ticket._id, { status: newStatus, assignedTo: assignedTo[ticket._id] });
+                          
+                          // Update status normally for all status changes
+                          await handleUpdateTicket(ticket._id, { status: newStatus, assignedTo: assignedTo[ticket._id] });
                         }}
-                        className={`mt-1 block w-full py-1 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${getStatusColor(ticket.status)}`}
+                        disabled={ticket.readyForBilling}
+                        className={`mt-1 block w-full py-1 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:ring-blue-500 sm:text-sm ${getStatusColor(ticket.status)} disabled:bg-gray-100 disabled:cursor-not-allowed`}
                       >
                         <option value="open">Open</option>
                         <option value="in-progress">In Progress</option>
@@ -506,7 +573,8 @@ const AdminSupportTickets = () => {
                             console.error('Failed to update assignment:', error);
                           }
                         }}
-                        className="block w-full py-1 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        disabled={ticket.readyForBilling}
+                        className="block w-full py-1 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                       >
                         <option value="">Unassigned</option>
                         {admins.map(admin => (
@@ -530,7 +598,7 @@ const AdminSupportTickets = () => {
                           onClick={() => handleEditTicket(ticket._id)}
                           className="text-green-600 hover:text-green-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Edit Ticket"
-                          disabled={isBillingReadyByCurrentAdmin(ticket)}
+                          disabled={ticket.readyForBilling}
                         >
                           <Edit className="h-4 w-4" />
                         </button>
@@ -542,8 +610,12 @@ const AdminSupportTickets = () => {
                         checked={ticket.readyForBilling || false}
                         onChange={(e) => handleBillingReadyChange(ticket._id, e.target.checked)}
                         disabled={ticket.status !== 'resolved' || isBillingReadyByCurrentAdmin(ticket)}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        title={ticket.status !== 'resolved' ? 'Ticket must be resolved first' : 'Mark as ready for billing'}
+                        className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={
+                          ticket.status !== 'resolved' 
+                            ? 'Ticket must be resolved first' 
+                            : 'Mark as ready for billing'
+                        }
                       />
                     </td>
                   </tr>
@@ -558,7 +630,7 @@ const AdminSupportTickets = () => {
                           {(ticket.resolvedBy || ticket.resolutionDetails) && (
                             <div>
                                <p className="text-sm font-medium text-gray-500 mb-1">Resolved By:</p>
- <p>{ticket.resolvedBy && admins && admins.length > 0 ? (admins.find(admin => admin._id === ticket.resolvedBy)?.name || 'Unknown Admin') : 'N/A'} (Raw: {JSON.stringify(ticket.resolvedBy)})</p>
+ <p>{ticket.resolvedBy && admins && admins.length > 0 ? (admins.find(admin => admin._id === ticket.resolvedBy)?.name || 'Unknown Admin') : 'N/A'}</p>
  <p className="text-sm font-medium text-gray-500 mt-4 mb-1">Resolution Details:</p>
                               <p className="whitespace-pre-wrap">{ticket.resolutionDetails || 'N/A'}</p>
                             </div>

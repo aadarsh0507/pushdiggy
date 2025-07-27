@@ -170,14 +170,14 @@ const Contact = () => {
               </div>
 
               {/* Emergency Support */}
-              <div className="mt-8 p-6 bg-red-50 rounded-lg border border-red-200">
-                <h3 className="text-lg font-semibold text-red-800 mb-2">
+              <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+                <h3 className="text-lg font-semibold text-blue-800 mb-2">
                   24/7 Emergency Support
                 </h3>
-                <p className="text-red-700 mb-2">
+                <p className="text-blue-700 mb-2">
                   For critical system failures and urgent technical issues:
                 </p>
-                <p className="text-red-800 font-semibold">
+                <p className="text-blue-800 font-semibold">
                   Emergency Hotline: +91 86087-06864
                 </p>
               </div>

@@ -105,11 +105,7 @@ export const updateSupportRequestStatus = async (req, res) => {
       updateFields.resolvedDate = new Date();
     }
 
-    // Automatically set readyForBilling to true if status is set to 'resolved' and readyForBilling was not provided in the request.
-    if (status === 'resolved' && readyForBilling === undefined) {
-      updateFields.readyForBilling = true;
-    }
-    // Prioritize readyForBilling value from the request body if it was provided.
+    // Only set readyForBilling if explicitly provided in the request body
     if (readyForBilling !== undefined) updateFields.readyForBilling = readyForBilling;
 
  console.log('updateFields before Mongoose update:', updateFields);
@@ -169,14 +165,14 @@ export const toggleBillingReadyStatus = async (req, res) => {
       updateFields = {
         billingReadyBy: null,
         billingReadyAt: null,
-        isBillingReady: false
+        readyForBilling: false
       };
     } else {
       // Admin is marking it as billing ready
       updateFields = {
         billingReadyBy: adminId,
         billingReadyAt: new Date(),
-        isBillingReady: true
+        readyForBilling: true
       };
     }
 

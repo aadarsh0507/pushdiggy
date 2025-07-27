@@ -8,6 +8,8 @@ const Home = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [activeClientCount, setActiveClientCount] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,6 +35,26 @@ const Home = () => {
       }
     };
     fetchServices();
+  }, []);
+
+  // Fetch active client count
+  useEffect(() => {
+    const fetchActiveClientCount = async () => {
+      try {
+        console.log('Fetching active client ...');
+        const res = await api.get('/clients/count/active');
+        console.log('Active client count response:', res.data);
+        setActiveClientCount(res.data.count);
+      } catch (err) {
+        console.error('Error fetching active client count:', err);
+        console.error('Error details:', err.response?.data || err.message);
+        // Fallback to 0 if API fails
+        setActiveClientCount(0);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchActiveClientCount();
   }, []);
 
   const featuredServices = services.slice(0, 3);
@@ -197,7 +219,13 @@ const Home = () => {
               <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900">3+</h3>
+              <h3 className="text-3xl font-bold text-gray-900">
+                {statsLoading ? (
+                  <div className="animate-pulse bg-gray-300 h-8 w-16 rounded mx-auto"></div>
+                ) : (
+                  `${activeClientCount}+`
+                )}
+              </h3>
               <p className="text-gray-600">Happy Clients</p>
             </div>
             <div className="text-center">

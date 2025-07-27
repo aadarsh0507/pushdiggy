@@ -1,8 +1,40 @@
 import React from 'react';
 import { CheckCircle, Users, Award, TrendingUp, Target, Eye, Heart, User } from 'lucide-react';
-import { teamMembers } from '../data/sampleData';
+import pushDiggyLogo from '../assets/push_diggy_logo.png';
 
 const About = () => {
+  // Team members data
+  const teamMembers = [
+    {
+      id: '1',
+      name: 'Surrendar',
+      role: 'Founder & CEO',
+      bio: 'Visionary leader with 8+ years of experience in IT services and business development. Passionate about transforming businesses through technology.',
+      image: 'https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=400'
+    },
+    {
+      id: '2',
+      name: 'Shanmugamani',
+      role: 'Technical Director',
+      bio: 'Expert in web development, mobile apps, and digital marketing. Leads our technical team with innovative solutions and client-focused approach.',
+      image: 'https://images.pexels.com/photos/3785077/pexels-photo-3785077.jpeg?auto=compress&cs=tinysrgb&w=400'
+    },
+    {
+      id: '3',
+      name: 'Muruganantham',
+      role: 'Senior Developer',
+      bio: 'Full-stack developer specializing in modern web technologies, camera systems, and printer solutions. Delivers scalable and robust applications.',
+      image: 'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=400'
+    },
+    {
+      id: '4',
+      name: 'Shakthi Selvam',
+      role: 'Digital Marketing Specialist',
+      bio: 'Creative digital marketing expert with expertise in SEO, social media, and content strategy. Drives online growth for our clients.',
+      image: 'https://images.pexels.com/photos/3184317/pexels-photo-3184317.jpeg?auto=compress&cs=tinysrgb&w=400'
+    }
+  ];
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -34,22 +66,22 @@ const About = () => {
               </p>
             </div>
             <div className="relative">
-              {/* Placeholder for office image - replace src with actual image when available */}
-              <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg shadow-xl h-80 flex items-center justify-center">
+              {/* Push Diggy Company Image */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-xl p-8 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="bg-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="h-10 w-10 text-white" />
-                  </div>
-                  <p className="text-blue-600 font-semibold">Office Image</p>
-                  <p className="text-blue-500 text-sm">Coming Soon</p>
+                  <img
+                    src={pushDiggyLogo}
+                    alt="Push Diggy - IT Services Company"
+                    className="w-64 h-64 object-contain mx-auto mb-6"
+                  />
+                  <h3 className="text-2xl font-bold text-blue-800 mb-2">
+                    PUSH DIGGY
+                  </h3>
+                  <p className="text-blue-600 font-semibold">
+                    Transforming Businesses Through Technology
+                  </p>
                 </div>
               </div>
-              {/* Uncomment and replace with actual image when available */}
-              {/* <img
-                src="/path-to-your-office-image.jpg"
-                alt="PUSH DIGGY Office"
-                className="rounded-lg shadow-xl w-full h-80 object-cover"
-              /> */}
             </div>
           </div>
         </div>

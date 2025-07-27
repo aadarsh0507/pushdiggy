@@ -64,6 +64,8 @@ export const loginClient = async (req, res) => {
 export const getAllClients = async (req, res) => {
   try {
     const clients = await Client.find();
+    console.log('Total clients found:', clients.length);
+    console.log('Client statuses:', clients.map(c => ({ name: c.name, status: c.status })));
     res.json(clients);
   } catch (error) {
     res.status(500).json({ message: "Server error.", error: error.message });
@@ -154,6 +156,58 @@ export const updateClientStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating client status:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const getActiveClientCount = async (req, res) => {
+  try {
+    console.log('getActiveClientCount function called');
+    
+    // First, let's see all clients and their statuses
+    const allClients = await Client.find({});
+    console.log('All clients:', allClients.map(c => ({ name: c.name, status: c.status })));
+    
+    // Count active clients
+    const activeClientCount = await Client.countDocuments({ status: 'active' });
+    console.log('Active client count:', activeClientCount);
+    
+    res.status(200).json({ 
+      success: true, 
+      count: activeClientCount,
+      totalClients: allClients.length,
+      clientStatuses: allClients.map(c => ({ name: c.name, status: c.status }))
+    });
+  } catch (error) {
+    console.error('Error getting active client count:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const toggleAMC = async (req, res) => {
+  try {
+    const clientId = req.params.id;
+    const client = await Client.findById(clientId);
+    
+    if (!client) {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+
+    // Toggle the AMC status
+    client.amc = !client.amc;
+    await client.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'AMC status updated successfully',
+      client: {
+        id: client._id,
+        name: client.name,
+        amc: client.amc
+      }
+    });
+  } catch (error) {
+    console.error('Error toggling AMC:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

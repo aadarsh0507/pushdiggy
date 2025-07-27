@@ -39,7 +39,7 @@ mongoose.connect(process.env.DATABASE_URL, {
 
 // Log incoming requests to debug routing
 app.use((req, res, next) => {
-  console.log('Request Path:', req.path, 'Original URL:', req.originalUrl);
+  console.log('Request Path:', req.path, 'Original URL:', req.originalUrl, 'Method:', req.method);
   next();
 });
 

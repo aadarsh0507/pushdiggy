@@ -81,12 +81,18 @@ const EditBillModal = ({ billData, clients, onSave, onClose }) => {
     const calculatedCgstAmount = currentSubtotal * (cgstPercent / 100);
     const calculatedGrandTotal = currentSubtotal + calculatedSgstAmount + calculatedCgstAmount;
 
+    // Round off all amounts to nearest rupee
+    const roundedSubtotal = Math.round(currentSubtotal);
+    const roundedSgstAmount = Math.round(calculatedSgstAmount);
+    const roundedCgstAmount = Math.round(calculatedCgstAmount);
+    const roundedGrandTotal = Math.round(calculatedGrandTotal);
+
     setEditedBill(prev => ({
       ...prev, // Keep previous state
-      subtotal: currentSubtotal, // Update subtotal based on items
-      sgstAmount: calculatedSgstAmount,
-      cgstAmount: calculatedCgstAmount,
-      grandTotal: calculatedGrandTotal,
+      subtotal: roundedSubtotal, // Update subtotal based on items
+      sgstAmount: roundedSgstAmount,
+      cgstAmount: roundedCgstAmount,
+      grandTotal: roundedGrandTotal,
     }));
   };
 

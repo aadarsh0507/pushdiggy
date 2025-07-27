@@ -83,33 +83,68 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className={`min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 ${
+      activeTab === 'client' 
+        ? 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50' 
+        : 'bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50'
+    }`}>
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className={`rounded-2xl shadow-2xl p-8 backdrop-blur-sm ${
+          activeTab === 'client' 
+            ? 'bg-white/90 border border-blue-200' 
+            : 'bg-white/90 border border-emerald-200'
+        }`}>
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-            <p className="text-gray-600 mt-2">Sign in to your account</p>
+            <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
+              activeTab === 'client' 
+                ? 'bg-gradient-to-r from-blue-500 to-indigo-600' 
+                : 'bg-gradient-to-r from-emerald-500 to-teal-600'
+            }`}>
+              {activeTab === 'client' ? (
+                <User className="h-8 w-8 text-white" />
+              ) : (
+                <Shield className="h-8 w-8 text-white" />
+              )}
+            </div>
+            <h2 className={`text-3xl font-bold mb-2 ${
+              activeTab === 'client' ? 'text-blue-900' : 'text-emerald-900'
+            }`}>
+              Welcome Back
+            </h2>
+            <p className={`text-lg ${
+              activeTab === 'client' ? 'text-blue-600' : 'text-emerald-600'
+            }`}>
+              Sign in as {activeTab === 'client' ? 'Client' : 'Admin'}
+            </p>
           </div>
 
-          <div className="flex rounded-lg bg-gray-100 p-1 mb-8">
+          <div className={`flex rounded-xl p-1 mb-8 ${
+            activeTab === 'client' 
+              ? 'bg-blue-100' 
+              : 'bg-emerald-100'
+          }`}>
             <button
               type="button"
               onClick={() => handleTabSwitch('client')}
-              className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md font-medium transition-colors duration-200 ${
-                activeTab === 'client' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              className={`flex-1 flex items-center justify-center py-3 px-4 rounded-lg font-semibold transition-all duration-300 ${
+                activeTab === 'client' 
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg transform scale-105' 
+                  : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
               }`}
             >
-              <User className="h-4 w-4 mr-2" />
+              <User className="h-5 w-5 mr-2" />
               Client Login
             </button>
             <button
               type="button"
               onClick={() => handleTabSwitch('admin')}
-              className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md font-medium transition-colors duration-200 ${
-                activeTab === 'admin' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              className={`flex-1 flex items-center justify-center py-3 px-4 rounded-lg font-semibold transition-all duration-300 ${
+                activeTab === 'admin' 
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg transform scale-105' 
+                  : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
               }`}
             >
-              <Shield className="h-4 w-4 mr-2" />
+              <Shield className="h-5 w-5 mr-2" />
               Admin Login
             </button>
           </div>
@@ -125,7 +160,9 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className={`block text-sm font-semibold mb-2 ${
+                activeTab === 'client' ? 'text-blue-700' : 'text-emerald-700'
+              }`}>
                 Email Address
               </label>
               <input
@@ -135,13 +172,19 @@ const Login = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                className={`w-full px-4 py-3 border rounded-lg transition-all duration-200 focus:ring-2 focus:border-transparent ${
+                  activeTab === 'client' 
+                    ? 'border-blue-200 focus:ring-blue-500 focus:border-blue-500' 
+                    : 'border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500'
+                }`}
                 placeholder="Enter your email"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className={`block text-sm font-semibold mb-2 ${
+                activeTab === 'client' ? 'text-blue-700' : 'text-emerald-700'
+              }`}>
                 Password
               </label>
               <div className="relative">
@@ -152,13 +195,19 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 pr-12"
+                  className={`w-full px-4 py-3 border rounded-lg transition-all duration-200 pr-12 focus:ring-2 focus:border-transparent ${
+                    activeTab === 'client' 
+                      ? 'border-blue-200 focus:ring-blue-500 focus:border-blue-500' 
+                      : 'border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500'
+                  }`}
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  className={`absolute inset-y-0 right-0 pr-3 flex items-center ${
+                    activeTab === 'client' ? 'text-blue-400 hover:text-blue-600' : 'text-emerald-400 hover:text-emerald-600'
+                  }`}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -171,14 +220,20 @@ const Login = () => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className={`h-4 w-4 focus:ring-2 border-gray-300 rounded ${
+                    activeTab === 'client' ? 'text-blue-600 focus:ring-blue-500' : 'text-emerald-600 focus:ring-emerald-500'
+                  }`}
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                <label htmlFor="remember-me" className={`ml-2 block text-sm ${
+                  activeTab === 'client' ? 'text-blue-700' : 'text-emerald-700'
+                }`}>
                   Remember me
                 </label>
               </div>
               <div className="text-sm">
-                <a href="#" className="text-blue-600 hover:text-blue-500">
+                <a href="#" className={`hover:underline ${
+                  activeTab === 'client' ? 'text-blue-600 hover:text-blue-500' : 'text-emerald-600 hover:text-emerald-500'
+                }`}>
                   Forgot your password?
                 </a>
               </div>
@@ -187,8 +242,12 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full px-4 py-3 rounded-lg font-semibold transition-colors duration-300 ${
-                isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+              className={`w-full px-4 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 ${
+                isLoading 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : activeTab === 'client'
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg'
               } text-white`}
             >
               {isLoading ? (
@@ -202,22 +261,30 @@ const Login = () => {
             </button>
           </form>
 
-          <div className="mt-8 text-center text-sm text-gray-600">
+          <div className="mt-8 text-center text-sm">
             <p>
               Don’t have an account?{' '}
               {activeTab === 'admin' ? (
-                <Link to="/register/admin" className="text-blue-600 hover:text-blue-500">
+                <Link to="/register/admin" className={`font-semibold hover:underline ${
+                  activeTab === 'client' ? 'text-blue-700 hover:text-blue-800' : 'text-emerald-700 hover:text-emerald-800'
+                }`}>
                   Register as Admin
                 </Link>
               ) : (
-                <Link to="/register" className="text-blue-600 hover:text-blue-500">
+                <Link to="/register" className={`font-semibold hover:underline ${
+                  activeTab === 'client' ? 'text-blue-700 hover:text-blue-800' : 'text-emerald-700 hover:text-emerald-800'
+                }`}>
                   Register as Client
                 </Link>
               )}
             </p>
-            <p className="mt-2">
+            <p className={`mt-2 ${
+              activeTab === 'client' ? 'text-blue-600' : 'text-emerald-600'
+            }`}>
               Need help?{' '}
-              <a href="#" className="text-blue-600 hover:text-blue-500">
+              <a href="#" className={`font-semibold hover:underline ${
+                activeTab === 'client' ? 'text-blue-700 hover:text-blue-800' : 'text-emerald-700 hover:text-emerald-800'
+              }`}>
                 Contact Support
               </a>
             </p>

@@ -323,12 +323,16 @@ const ClientDashboard = () => {
                           <span>{request.priority}</span>
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{request.description.substring(0, 100)}...</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {request.description.length > 100 
+                          ? `${request.description.substring(0, 100)}...` 
+                          : request.description}
+                      </p>
                       <div className="flex items-center space-x-4 mt-2">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
                           {request.status}
                         </span>
-                        <span className="text-xs text-gray-500">{request.date}</span>
+                        <span className="text-xs text-gray-500">{new Date(request.date).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
@@ -430,7 +434,11 @@ const ClientDashboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{request.subject}</div>
-                        <div className="text-sm text-gray-500">{request.description.substring(0, 50)}...</div>
+                        <div className="text-sm text-gray-500">
+                          {request.description.length > 50 
+                            ? `${request.description.substring(0, 50)}...` 
+                            : request.description}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
