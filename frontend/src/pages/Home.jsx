@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRight, CheckCircle, Star, Users, Award, TrendingUp, Camera, Printer, Globe, Smartphone, Briefcase } from 'lucide-react';
+import { ArrowRight, CheckCircle, Star, Users, Award, TrendingUp, Camera, Printer, Globe, Smartphone, Briefcase, Edit, Save, X } from 'lucide-react';
 import ConfettiSpray from "../components/ConfettiRain";
 import api from '../api/api';
+import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
   const [services, setServices] = useState([]);
@@ -10,8 +11,20 @@ const Home = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [totalClientCount, setTotalClientCount] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    monthsExperience: '6+',
+    uptimeGuarantee: '99.9%',
+    projectsCompleted: '5+'
+  });
+  const [isEditingStats, setIsEditingStats] = useState(false);
+  const [editingStats, setEditingStats] = useState({
+    monthsExperience: '',
+    uptimeGuarantee: '',
+    projectsCompleted: ''
+  });
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAdmin } = useAuth();
 
   // Check if user came from splash screen
   useEffect(() => {
@@ -37,25 +50,97 @@ const Home = () => {
     fetchServices();
   }, []);
 
-  // Fetch total client count
+  // Fetch total client count and stats
   useEffect(() => {
-    const fetchTotalClientCount = async () => {
+    const fetchData = async () => {
       try {
+        // Fetch total client count
         console.log('Fetching total client count...');
-        const res = await api.get('/clients/count');
-        console.log('Total client count response:', res.data);
-        setTotalClientCount(res.data.count);
+        const clientRes = await api.get('/clients/count');
+        console.log('Total client count response:', clientRes.data);
+        setTotalClientCount(clientRes.data.count);
+
+        // Fetch stats
+        console.log('Fetching stats...');
+        const statsRes = await api.get('/stats');
+        console.log('Stats response:', statsRes.data);
+        setStats(statsRes.data);
       } catch (err) {
-        console.error('Error fetching total client count:', err);
+        console.error('Error fetching data:', err);
         setTotalClientCount(0);
       } finally {
         setStatsLoading(false);
       }
     };
-    fetchTotalClientCount();
+    fetchData();
   }, []);
 
   const featuredServices = services.slice(0, 3);
+
+  // Handle stats editing
+  const handleEditStats = () => {
+    console.log('Current stats:', stats);
+    setEditingStats({
+      monthsExperience: stats.monthsExperience || '',
+      uptimeGuarantee: stats.uptimeGuarantee || '',
+      projectsCompleted: stats.projectsCompleted || ''
+    });
+    setIsEditingStats(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingStats(false);
+    setEditingStats({
+      monthsExperience: '',
+      uptimeGuarantee: '',
+      projectsCompleted: ''
+    });
+  };
+
+  const handleSaveStats = async () => {
+    try {
+      console.log('Sending stats update:', editingStats);
+      console.log('Authorization header:', api.defaults.headers.common['Authorization']);
+      
+      // Check if user is logged in and is admin
+      if (!isAdmin) {
+        alert('You must be logged in as an admin to update stats.');
+        return;
+      }
+      
+      // Validate that all fields have values
+      if (!editingStats.monthsExperience || !editingStats.uptimeGuarantee || !editingStats.projectsCompleted) {
+        alert('All fields are required. Please fill in all the stats values.');
+        return;
+      }
+      
+      const res = await api.put('/stats', editingStats);
+      console.log('Stats update response:', res.data);
+      setStats(res.data.stats);
+      setIsEditingStats(false);
+      alert('Stats updated successfully!');
+    } catch (err) {
+      console.error('Error updating stats:', err);
+      console.error('Error response:', err.response?.data);
+      
+      if (err.response?.status === 401) {
+        alert('Authentication failed. Please log in as an admin.');
+      } else if (err.response?.status === 403) {
+        alert('Access denied. Admin privileges required.');
+      } else if (err.response?.status === 400) {
+        alert(`Validation error: ${err.response?.data?.error || 'Invalid data'}`);
+      } else {
+        alert('Error updating stats. Please try again.');
+      }
+    }
+  };
+
+  const handleStatsChange = (field, value) => {
+    setEditingStats(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   // Service categories with icons and descriptions (showing only 3 on home page)
   const serviceCategories = [
@@ -212,6 +297,36 @@ const Home = () => {
       {/* Stats Section */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {isAdmin && (
+            <div className="flex justify-end mb-6">
+              {!isEditingStats ? (
+                <button
+                  onClick={handleEditStats}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit Stats
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveStats}
+                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Save className="h-4 w-4" />
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -230,21 +345,48 @@ const Home = () => {
               <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Award className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900">6+</h3>
+              {isEditingStats ? (
+                <input
+                  type="text"
+                  value={editingStats.monthsExperience}
+                  onChange={(e) => handleStatsChange('monthsExperience', e.target.value)}
+                  className="text-3xl font-bold text-gray-900 text-center bg-transparent border-b-2 border-blue-600 focus:outline-none w-full"
+                />
+              ) : (
+                <h3 className="text-3xl font-bold text-gray-900">{stats.monthsExperience}</h3>
+              )}
               <p className="text-gray-600">Months Experience</p>
             </div>
             <div className="text-center">
               <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900">99.9%</h3>
+              {isEditingStats ? (
+                <input
+                  type="text"
+                  value={editingStats.uptimeGuarantee}
+                  onChange={(e) => handleStatsChange('uptimeGuarantee', e.target.value)}
+                  className="text-3xl font-bold text-gray-900 text-center bg-transparent border-b-2 border-blue-600 focus:outline-none w-full"
+                />
+              ) : (
+                <h3 className="text-3xl font-bold text-gray-900">{stats.uptimeGuarantee}</h3>
+              )}
               <p className="text-gray-600">Uptime Guarantee</p>
             </div>
             <div className="text-center">
               <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-gray-900">5+</h3>
+              {isEditingStats ? (
+                <input
+                  type="text"
+                  value={editingStats.projectsCompleted}
+                  onChange={(e) => handleStatsChange('projectsCompleted', e.target.value)}
+                  className="text-3xl font-bold text-gray-900 text-center bg-transparent border-b-2 border-blue-600 focus:outline-none w-full"
+                />
+              ) : (
+                <h3 className="text-3xl font-bold text-gray-900">{stats.projectsCompleted}</h3>
+              )}
               <p className="text-gray-600">Projects Completed</p>
             </div>
           </div>

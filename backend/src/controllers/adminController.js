@@ -1,5 +1,6 @@
 import Admin from '../models/admin.js';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const adminController = {
   async registerAdmin(req, res) {
@@ -65,10 +66,22 @@ const adminController = {
         return res.status(401).json({ message: "Invalid credentials." });
       }
 
+      // Generate JWT token
+      const token = jwt.sign(
+        { 
+          id: admin._id, 
+          email: admin.email, 
+          role: admin.role 
+        }, 
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
+      );
+
       // Ensure only 'admin' role gets through this controller
       res.status(200).json({
         success: true,
         message: "Admin logged in successfully.",
+        token: token,
         user: {
           id: admin._id,
           name: admin.name,

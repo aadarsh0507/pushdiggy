@@ -1,6 +1,6 @@
 // Admin Dashboard Component
 import React, { useState, useEffect } from 'react';
-import { Users, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, CheckCircle, Clock, AlertTriangle, ToggleLeft, ToggleRight, CreditCard, Camera, Printer, Globe, TrendingUp, Smartphone, Briefcase } from 'lucide-react';
+import { Users, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, CheckCircle, Clock, AlertTriangle, ToggleLeft, ToggleRight, CreditCard, Camera, Printer, Globe, TrendingUp, Smartphone, Briefcase, Package, Calendar, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 // Import the new components (will be created next)
 import AdminSupportTickets from '../components/AdminSupportTickets';
@@ -12,9 +12,17 @@ import { useAuth } from '../context/AuthContext';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  
+  // Debug: Log user object to understand its structure
+  console.log('Current user object:', user);
+  console.log('User ID (_id):', user?._id);
+  console.log('User ID (id):', user?.id);
+  console.log('User ID type:', typeof user?._id);
+  console.log('User keys:', user ? Object.keys(user) : 'No user');
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [services, setServices] = useState([]);
+  const [clientServices, setClientServices] = useState([]); // New state for client services
   const [clients, setClients] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -25,6 +33,17 @@ const AdminDashboard = () => {
   const [editingService, setEditingService] = useState(null);
   const [supportTicketsData, setSupportTicketsData] = useState([]);
   const [bills, setBills] = useState([]); // State to hold bill data
+
+  // Edit modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    features: '',
+    category: 'Printer',
+    selectedClients: []
+  });
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,6 +72,22 @@ const AdminDashboard = () => {
     };
     fetchClients();
   }, []);
+
+  // Fetch client services from backend
+  useEffect(() => {
+    fetchClientServices();
+  }, []);
+
+  const fetchClientServices = async () => {
+    try {
+      const res = await api.get('/client-services');
+      console.log('Fetched client services:', res.data.length, 'services');
+      console.log('Sample client service structure:', res.data[0]);
+      setClientServices(res.data);
+    } catch (err) {
+      console.error('Error fetching client services:', err);
+    }
+  };
 
   // Fetch services from backend
   useEffect(() => {
@@ -141,6 +176,8 @@ const AdminDashboard = () => {
     totalMessages: contactMessages.length,
     newMessages: contactMessages.filter(msg => msg.status === 'new').length,
     totalServices: services.length,
+    totalClientServices: clientServices.length,
+    activeClientServices: clientServices.filter(s => s.status === 'active').length,
     supportTickets: supportTicketsData.length // Use the length of the fetched data
   };
 
@@ -176,6 +213,176 @@ const AdminDashboard = () => {
       setServices(services.filter(s => s._id !== serviceId));
     } catch (err) {
       console.error('Error deleting service:', err);
+    }
+  };
+
+  // Delete client service
+  const deleteClientService = async (serviceName) => {
+    try {
+      if (window.confirm(`Are you sure you want to delete all instances of "${serviceName}" for all clients?`)) {
+        console.log('Attempting to delete client service:', serviceName);
+        console.log('Current clientServices count before deletion:', clientServices.length);
+        
+        // Find all services with the same name
+        const servicesToDelete = clientServices.filter(service => service.name === serviceName);
+        console.log(`Found ${servicesToDelete.length} services to delete for "${serviceName}"`);
+        console.log('Services to delete:', servicesToDelete.map(s => ({ id: s._id, name: s.name, clientId: s.clientId })));
+        
+        // Delete all services with the same name
+        const deletePromises = servicesToDelete.map(service => {
+          console.log(`Deleting service ${service._id} for client ${service.clientId}`);
+          return api.delete(`/client-services/${service._id}`);
+        });
+        
+        const responses = await Promise.all(deletePromises);
+        console.log('Delete API responses:', responses);
+        
+        // Refresh the client services data from the backend to ensure proper grouping
+        await fetchClientServices();
+        
+        alert(`Successfully deleted ${servicesToDelete.length} instance(s) of "${serviceName}"!`);
+      }
+    } catch (err) {
+      console.error('Error deleting client service:', err);
+      alert('Error deleting client service. Please try again.');
+    }
+  };
+
+  // Map frontend category values to backend enum values
+  const mapCategoryToBackend = (category) => {
+    const categoryMap = {
+      'printer': 'Printer',
+      'website': 'Website',
+      'mobile-app': 'Software',
+      'digital-marketing': 'Other',
+      'it-consultation': 'Other',
+      'camera': 'Camera',
+      'general': 'Other'
+    };
+    return categoryMap[category] || category || 'Other';
+  };
+
+  // Open edit modal for client service
+  const openEditModal = (service) => {
+    setEditingService(service);
+    
+    // Debug: Log the service features to understand the data structure
+    console.log('Service features:', service.features, 'type:', typeof service.features, 'isArray:', Array.isArray(service.features));
+    
+    const featuresString = Array.isArray(service.features) 
+      ? service.features.join(', ') 
+      : (typeof service.features === 'string' ? service.features : '');
+    
+    console.log('Converted features to string:', featuresString);
+    
+    const newEditForm = {
+      name: service.name || '',
+      description: service.description || '',
+      price: service.price || '',
+      features: featuresString,
+      category: mapCategoryToBackend(service.category), // Map to backend-compatible category
+      selectedClients: [typeof service.clientId === 'object' ? service.clientId._id : service.clientId] // Initialize with current client
+    };
+    
+    console.log('Setting editForm to:', newEditForm);
+    setEditForm(newEditForm);
+    setShowEditModal(true);
+  };
+
+  // Handle edit form changes
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    console.log(`handleEditFormChange - name: ${name}, value:`, value, 'type:', typeof value);
+    setEditForm(prev => {
+      const newForm = {
+        ...prev,
+        [name]: value
+      };
+      console.log('New editForm state:', newForm);
+      return newForm;
+    });
+  };
+
+  // Handle client selection for multi-select
+  const handleClientSelection = (clientId) => {
+    setEditForm(prev => {
+      const currentSelected = prev.selectedClients || [];
+      const isSelected = currentSelected.includes(clientId);
+      
+      if (isSelected) {
+        // Remove client if already selected
+        return {
+          ...prev,
+          selectedClients: currentSelected.filter(id => id !== clientId)
+        };
+      } else {
+        // Add client if not selected
+        return {
+          ...prev,
+          selectedClients: [...currentSelected, clientId]
+        };
+      }
+    });
+  };
+
+  // Edit client service
+  const editClientService = async (e) => {
+    e.preventDefault();
+    
+    if (!editForm.name || !editForm.description || !editForm.selectedClients || editForm.selectedClients.length === 0) {
+      alert('Please fill in all required fields and select at least one client');
+      return;
+    }
+
+    try {
+      // Ensure features is always an array
+      let featuresArray = [];
+      if (editForm.features) {
+        if (typeof editForm.features === 'string') {
+          featuresArray = editForm.features.split(',').map(f => f.trim()).filter(Boolean);
+        } else if (Array.isArray(editForm.features)) {
+          featuresArray = editForm.features;
+        }
+      }
+      
+      console.log('Processed features array:', featuresArray);
+      console.log('User ID for assignedBy:', user?._id);
+      
+      // Create multiple service entries for each selected client
+      const updatePromises = editForm.selectedClients.map(clientId => {
+        const updateData = {
+          name: editForm.name,
+          description: editForm.description,
+          price: editForm.price || undefined,
+          features: featuresArray,
+          category: editForm.category,
+          clientId: clientId,
+          ...(user?._id || user?.id ? { assignedBy: user?._id || user?.id } : {})
+        };
+        
+        console.log('Sending updateData for clientId:', clientId, updateData);
+
+        // If this is the original service, update it
+        const originalClientId = typeof editingService.clientId === 'object' ? editingService.clientId._id : editingService.clientId;
+        if (clientId === originalClientId) {
+          return api.put(`/client-services/${editingService._id}`, updateData);
+        } else {
+          // For new clients, create new service entries
+          return api.post('/client-services', updateData);
+        }
+      });
+
+      const responses = await Promise.all(updatePromises);
+      
+      // Refresh client services to get updated data
+      await fetchClientServices();
+      
+      setShowEditModal(false);
+      setEditingService(null);
+      alert('Client service updated successfully!');
+    } catch (err) {
+      console.error('Error updating client service:', err);
+      alert('Error updating client service. Please try again.');
     }
   };
 
@@ -406,6 +613,19 @@ const AdminDashboard = () => {
           
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex items-center">
+              <div className="p-2 rounded-lg bg-purple-100">
+                <Package className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Client Services</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalClientServices}</p>
+                <p className="text-xs text-gray-500">{stats.activeClientServices} active</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow">
+            <div className="flex items-center">
               <div className="p-2 rounded-lg bg-yellow-100">
                 <MessageSquare className="h-6 w-6 text-yellow-600" />
               </div>
@@ -419,8 +639,8 @@ const AdminDashboard = () => {
           
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex items-center">
-              <div className="p-2 rounded-lg bg-purple-100">
-                <BarChart3 className="h-6 w-6 text-purple-600" />
+              <div className="p-2 rounded-lg bg-orange-100">
+                <BarChart3 className="h-6 w-6 text-orange-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Support Tickets</p>
@@ -615,7 +835,17 @@ const AdminDashboard = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{client.company}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{client.phone}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.services?.length || 0} services</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {(() => {
+                        const serviceCount = clientServices.filter(service => {
+                          // Handle both populated and non-populated clientId
+                          const serviceClientId = typeof service.clientId === 'object' ? service.clientId._id : service.clientId;
+                          return serviceClientId === client._id;
+                        }).length;
+                        console.log(`Client ${client.name} (${client._id}): ${serviceCount} services`);
+                        return `${serviceCount} services`;
+                      })()}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                     <button
                       onClick={(e) => {
@@ -658,9 +888,9 @@ const AdminDashboard = () => {
                         style={{ cursor: 'default' }} // Ensure cursor doesn't indicate clickability
                          onClick={(e) => e.stopPropagation()} // Prevent row click handler
                     >
-                      {client.inactiveDate 
+                      {client.inactiveDate && client.inactiveDate !== '1970-01-01T00:00:00.000Z' && new Date(client.inactiveDate).getTime() !== new Date('1970-01-01').getTime()
                         ? new Date(client.inactiveDate).toLocaleDateString() 
-                        : '-'}
+                        : ''}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2 no-click"
@@ -1198,6 +1428,190 @@ const AdminDashboard = () => {
     </div>
   );
 
+  // Render the Client Services section
+  const renderClientServices = () => {
+    // Group services by service name/type
+    const groupedServices = clientServices.reduce((acc, service) => {
+      const serviceKey = service.name;
+      if (!acc[serviceKey]) {
+        acc[serviceKey] = {
+          service: service,
+          clients: []
+        };
+      }
+      // Add the populated client object if it exists, otherwise use clientId
+      if (service.clientId && typeof service.clientId === 'object') {
+        acc[serviceKey].clients.push(service.clientId);
+      } else if (service.clientId) {
+        acc[serviceKey].clients.push({ name: service.clientId, _id: service.clientId });
+      }
+      return acc;
+    }, {});
+
+    const groupedServicesArray = Object.values(groupedServices);
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Client Services</h2>
+            <p className="text-gray-600 mt-1">Manage and monitor all client services</p>
+          </div>
+          <Link
+            to="/create-client-service?category=printer"
+            className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Client Service
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {getCurrentItems(groupedServicesArray).map((groupedService) => {
+            const service = groupedService.service;
+            const clients = groupedService.clients;
+            
+            return (
+              <div key={service._id} className="group relative bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-gray-100 overflow-hidden">
+                {/* Service Header */}
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 opacity-10">
+                    <Package className="h-16 w-16" />
+                  </div>
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-bold truncate">{service.name}</h3>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        service.status === 'active' ? 'bg-green-500 text-white' :
+                        service.status === 'pending' ? 'bg-yellow-500 text-white' :
+                        service.status === 'inactive' ? 'bg-red-500 text-white' :
+                        'bg-gray-500 text-white'
+                      }`}>
+                        {service.status}
+                      </span>
+                    </div>
+                    <div className="max-h-16 overflow-y-auto bg-white/10 backdrop-blur-sm rounded-lg p-2 border border-white/20">
+                      <p className="text-white/90 text-sm leading-relaxed">
+                        {service.description || 'Service description not available'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Service Content */}
+                <div className="p-4">
+                  {/* Service Details */}
+                  <div className="space-y-3 mb-4">
+                    {service.price && (
+                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-100 shadow-sm">
+                        <div className="flex items-center">
+                          <CreditCard className="h-4 w-4 text-emerald-600 mr-2" />
+                          <span className="text-sm font-medium text-emerald-700">Price</span>
+                        </div>
+                        <span className="text-sm font-semibold text-emerald-900 bg-white/60 px-2 py-1 rounded-md">{service.price}</span>
+                      </div>
+                    )}
+                    
+                    {service.category && (
+                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-100 shadow-sm">
+                        <div className="flex items-center">
+                          <Settings className="h-4 w-4 text-orange-600 mr-2" />
+                          <span className="text-sm font-medium text-orange-700">Category</span>
+                        </div>
+                        <span className="text-sm font-semibold text-orange-900 bg-white/60 px-2 py-1 rounded-md">{service.category}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Clients Section */}
+                  <div className="mb-4">
+                    <div className="flex items-center mb-2">
+                      <Users className="h-4 w-4 text-blue-600 mr-2" />
+                      <span className="text-sm font-semibold text-gray-700">Assigned Clients ({clients.length})</span>
+                    </div>
+                    <div className="space-y-1 max-h-24 overflow-y-auto bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-2 border border-purple-100 shadow-sm">
+                      {clients.map((client, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-white/80 backdrop-blur-sm rounded-lg border border-purple-200 shadow-sm hover:shadow-md transition-all duration-200">
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mr-3 animate-pulse"></div>
+                            <div className="flex flex-col">
+                              <span className="text-sm text-purple-800 font-medium">
+                                {client.name || 'Unknown Client'}
+                              </span>
+                              {client.email && (
+                                <span className="text-xs text-purple-600">
+                                  {client.email}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-xs text-purple-600 bg-gradient-to-r from-purple-100 to-pink-100 px-2 py-1 rounded-full font-medium">
+                            Active
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Features */}
+                  {service.features && service.features.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                        <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                        Features
+                      </h4>
+                      <div className="max-h-20 overflow-y-auto bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100 shadow-sm">
+                        <div className="flex flex-wrap gap-2">
+                          {service.features.map((feature, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105"
+                            >
+                              {feature}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex space-x-2">
+                                         <button
+                       onClick={() => openEditModal(service)}
+                       className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center text-sm"
+                     >
+                       <Edit className="h-3 w-3 mr-1" />
+                       Edit
+                     </button>
+                    <button
+                      onClick={() => deleteClientService(service.name)}
+                      className="flex-1 border-2 border-red-200 text-red-600 px-3 py-1.5 rounded-lg hover:border-red-300 hover:bg-red-50 transition-all duration-200 font-medium flex items-center justify-center text-sm"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+
+                {/* Service Status Indicator */}
+                <div className={`absolute top-4 left-4 w-3 h-3 rounded-full ${
+                  service.status === 'active' ? 'bg-green-400' :
+                  service.status === 'pending' ? 'bg-yellow-400' :
+                  service.status === 'inactive' ? 'bg-red-400' :
+                  'bg-gray-400'
+                } animate-pulse`}></div>
+              </div>
+            );
+          })}
+        </div>
+        
+
+        
+        {renderPagination(groupedServicesArray)}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
@@ -1214,7 +1628,8 @@ const AdminDashboard = () => {
             {[
               { key: 'overview', label: 'Overview', icon: BarChart3 },
               { key: 'clients', label: 'Clients', icon: Users },
-              { key: 'services', label: 'Client Service', icon: Settings },
+              { key: 'services', label: 'General Services', icon: Settings },
+              { key: 'client-services', label: 'Client Services', icon: Package },
               { key: 'messages', label: 'Messages', icon: MessageSquare },
               { key: 'support', label: 'Support Tickets', icon: MessageSquare }, // Reusing MessageSquare for now
               { key: 'billing', label: 'Billing', icon: CreditCard },
@@ -1244,6 +1659,7 @@ const AdminDashboard = () => {
           {activeTab === 'overview' && renderOverview()}
           {activeTab === 'clients' && renderClients()}
           {activeTab === 'services' && renderServices()}
+          {activeTab === 'client-services' && renderClientServices()}
           {activeTab === 'messages' && renderMessages()}
           {activeTab === 'support' && <AdminSupportTickets />}
           {activeTab === 'billing' && <AdminBilling clients={clients} onBillCreated={fetchBills} />}
@@ -1251,6 +1667,178 @@ const AdminDashboard = () => {
           {activeTab === 'admin-users' && <AdminUsers />} {/* Render the Admin Users section */}
         </div>
         {renderMessageDetails()} {/* Render the message details modal/sidebar */}
+        
+        {/* Edit Client Service Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Edit Client Service</h2>
+                  <button
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingService(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                
+                <form onSubmit={editClientService} className="space-y-6">
+                  {/* Service Details */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Service Name *
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={editForm.name}
+                          onChange={handleEditFormChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Enter service name"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Price
+                        </label>
+                        <input
+                          type="text"
+                          name="price"
+                          value={editForm.price}
+                          onChange={handleEditFormChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., $500/month or Contact for pricing"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Description *
+                      </label>
+                      <textarea
+                        name="description"
+                        value={editForm.description}
+                        onChange={handleEditFormChange}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Describe the service in detail"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Features (comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        name="features"
+                        value={editForm.features}
+                        onChange={handleEditFormChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., 24/7 support, remote access, backup services"
+                      />
+                    </div>
+                    
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Category
+                      </label>
+                      <select
+                        name="category"
+                        value={editForm.category}
+                        onChange={handleEditFormChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="Printer">Printer Services</option>
+                        <option value="Website">Website Services</option>
+                        <option value="Software">Software Services</option>
+                        <option value="Hardware">Hardware Services</option>
+                        <option value="Network">Network Services</option>
+                        <option value="Security">Security Services</option>
+                        <option value="Camera">Camera Services</option>
+                        <option value="Other">Other Services</option>
+                      </select>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Assign to Clients *
+                      </label>
+                      <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-2">
+                        {clients.map((client) => {
+                          const isSelected = editForm.selectedClients?.includes(client._id);
+                          return (
+                            <div
+                              key={client._id}
+                              onClick={() => handleClientSelection(client._id)}
+                              className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
+                                isSelected
+                                  ? 'bg-blue-100 border border-blue-300'
+                                  : 'hover:bg-gray-50 border border-transparent'
+                              }`}
+                            >
+                              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center mr-3 ${
+                                isSelected
+                                  ? 'bg-blue-600 border-blue-600'
+                                  : 'border-gray-300'
+                              }`}>
+                                {isSelected && (
+                                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900">{client.name}</div>
+                                <div className="text-sm text-gray-500">{client.email}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {editForm.selectedClients?.length > 0 && (
+                        <div className="mt-2 text-sm text-gray-600">
+                          Selected: {editForm.selectedClients.length} client(s)
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditingService(null);
+                      }}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Update Service
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Service } from '../models/Service.js'; // Assuming default export
+import { Service } from '../models/Service.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -100,28 +100,15 @@ export const getAllServices = async (req, res) => {
   }
 };
 
-export const getServicesByClient = async (req, res) => {
-  try {
-    const { clientId } = req.params;
-    
-    if (!clientId) {
-      return res.status(400).json({ message: 'Client ID is required' });
-    }
-    
-    const services = await Service.find({ clientId: clientId });
-    console.log(`Services requested for client ${clientId}, returning:`, services.length, 'services');
-    res.json(services);
-  } catch (error) {
-    res.status(500).json({ message: "Server error.", error: error.message });
-  }
-};
-
 export const createService = async (req, res) => {
   try {
+    console.log('Creating service with data:', req.body);
     const newService = new Service(req.body);
     await newService.save();
+    console.log('Service created successfully:', newService);
     res.status(201).json(newService);
   } catch (error) {
+    console.error('Error creating service:', error);
     res.status(500).json({ message: "Server error.", error: error.message });
   }
 };

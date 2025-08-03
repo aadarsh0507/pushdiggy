@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle, Users, Award, TrendingUp, Target, Eye, Heart, User } from 'lucide-react';
+import { CheckCircle, Users, Award, TrendingUp, Target, Eye, Heart, User, Edit, Save, X } from 'lucide-react';
 import pushDiggyLogo from '../assets/push_diggy_logo.png';
 import api from '../api/api';
+import { useAuth } from '../context/AuthContext';
 
 const About = () => {
   // Team members data
@@ -52,23 +53,107 @@ const About = () => {
 
   const [totalClientCount, setTotalClientCount] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [aboutStats, setAboutStats] = useState({
+    yearsOfExcellence: '1+',
+    projectsDelivered: '5+',
+    uptimeGuarantee: '99.9%'
+  });
+  const [isEditingAboutStats, setIsEditingAboutStats] = useState(false);
+  const [editingAboutStats, setEditingAboutStats] = useState({
+    yearsOfExcellence: '',
+    projectsDelivered: '',
+    uptimeGuarantee: ''
+  });
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
-    const fetchTotalClientCount = async () => {
+    const fetchData = async () => {
       try {
+        // Fetch total client count
         console.log('Fetching total client count...');
-        const res = await api.get('/clients/count');
-        console.log('Total client count response:', res.data);
-        setTotalClientCount(res.data.count);
+        const clientRes = await api.get('/clients/count');
+        console.log('Total client count response:', clientRes.data);
+        setTotalClientCount(clientRes.data.count);
+
+        // Fetch about stats
+        console.log('Fetching about stats...');
+        const statsRes = await api.get('/about-stats');
+        console.log('About stats response:', statsRes.data);
+        setAboutStats(statsRes.data);
       } catch (err) {
-        console.error('Error fetching total client count:', err);
+        console.error('Error fetching data:', err);
         setTotalClientCount(0);
       } finally {
         setStatsLoading(false);
       }
     };
-    fetchTotalClientCount();
+    fetchData();
   }, []);
+
+  // Handle about stats editing
+  const handleEditAboutStats = () => {
+    console.log('Current about stats:', aboutStats);
+    setEditingAboutStats({
+      yearsOfExcellence: aboutStats.yearsOfExcellence || '',
+      projectsDelivered: aboutStats.projectsDelivered || '',
+      uptimeGuarantee: aboutStats.uptimeGuarantee || ''
+    });
+    setIsEditingAboutStats(true);
+  };
+
+  const handleCancelEditAboutStats = () => {
+    setIsEditingAboutStats(false);
+    setEditingAboutStats({
+      yearsOfExcellence: '',
+      projectsDelivered: '',
+      uptimeGuarantee: ''
+    });
+  };
+
+  const handleSaveAboutStats = async () => {
+    try {
+      console.log('Sending about stats update:', editingAboutStats);
+      console.log('Authorization header:', api.defaults.headers.common['Authorization']);
+      
+      // Check if user is logged in and is admin
+      if (!isAdmin) {
+        alert('You must be logged in as an admin to update stats.');
+        return;
+      }
+      
+      // Validate that all fields have values
+      if (!editingAboutStats.yearsOfExcellence || !editingAboutStats.projectsDelivered || !editingAboutStats.uptimeGuarantee) {
+        alert('All fields are required. Please fill in all the stats values.');
+        return;
+      }
+      
+      const res = await api.put('/about-stats', editingAboutStats);
+      console.log('About stats update response:', res.data);
+      setAboutStats(res.data.stats);
+      setIsEditingAboutStats(false);
+      alert('About stats updated successfully!');
+    } catch (err) {
+      console.error('Error updating about stats:', err);
+      console.error('Error response:', err.response?.data);
+      
+      if (err.response?.status === 401) {
+        alert('Authentication failed. Please log in as an admin.');
+      } else if (err.response?.status === 403) {
+        alert('Access denied. Admin privileges required.');
+      } else if (err.response?.status === 400) {
+        alert(`Validation error: ${err.response?.data?.error || 'Invalid data'}`);
+      } else {
+        alert('Error updating about stats. Please try again.');
+      }
+    }
+  };
+
+  const handleAboutStatsChange = (field, value) => {
+    setEditingAboutStats(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   return (
     <div className="min-h-screen">
@@ -213,6 +298,36 @@ const About = () => {
       {/* Stats Section */}
       <section className="py-20 bg-blue-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {isAdmin && (
+            <div className="flex justify-end mb-6">
+              {!isEditingAboutStats ? (
+                <button
+                  onClick={handleEditAboutStats}
+                  className="flex items-center gap-2 bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition-colors"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit Stats
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveAboutStats}
+                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Save className="h-4 w-4" />
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancelEditAboutStats}
+                    className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               PUSH DIGGY by the Numbers
@@ -240,21 +355,48 @@ const About = () => {
               <div className="bg-white bg-opacity-20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Award className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-4xl font-bold mb-2">1+</h3>
+              {isEditingAboutStats ? (
+                <input
+                  type="text"
+                  value={editingAboutStats.yearsOfExcellence}
+                  onChange={(e) => handleAboutStatsChange('yearsOfExcellence', e.target.value)}
+                  className="text-4xl font-bold text-white text-center bg-transparent border-b-2 border-white focus:outline-none w-full"
+                />
+              ) : (
+                <h3 className="text-4xl font-bold mb-2">{aboutStats.yearsOfExcellence}</h3>
+              )}
               <p className="text-blue-100">Years of Excellence</p>
             </div>
             <div className="text-center">
               <div className="bg-white bg-opacity-20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-4xl font-bold mb-2">5+</h3>
+              {isEditingAboutStats ? (
+                <input
+                  type="text"
+                  value={editingAboutStats.projectsDelivered}
+                  onChange={(e) => handleAboutStatsChange('projectsDelivered', e.target.value)}
+                  className="text-4xl font-bold text-white text-center bg-transparent border-b-2 border-white focus:outline-none w-full"
+                />
+              ) : (
+                <h3 className="text-4xl font-bold mb-2">{aboutStats.projectsDelivered}</h3>
+              )}
               <p className="text-blue-100">Projects Delivered</p>
             </div>
             <div className="text-center">
               <div className="bg-white bg-opacity-20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-4xl font-bold mb-2">99.9%</h3>
+              {isEditingAboutStats ? (
+                <input
+                  type="text"
+                  value={editingAboutStats.uptimeGuarantee}
+                  onChange={(e) => handleAboutStatsChange('uptimeGuarantee', e.target.value)}
+                  className="text-4xl font-bold text-white text-center bg-transparent border-b-2 border-white focus:outline-none w-full"
+                />
+              ) : (
+                <h3 className="text-4xl font-bold mb-2">{aboutStats.uptimeGuarantee}</h3>
+              )}
               <p className="text-blue-100">Uptime Guarantee</p>
             </div>
           </div>

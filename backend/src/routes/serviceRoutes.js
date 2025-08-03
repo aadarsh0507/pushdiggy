@@ -1,11 +1,10 @@
 import express from 'express';
 import multer from 'multer';
-import { getAllServices, createService, updateService, deleteService, uploadService, uploadMiddleware, getServicesByClient } from '../controllers/serviceController.js';
+import { getAllServices, createService, updateService, deleteService, uploadService, uploadMiddleware } from '../controllers/serviceController.js';
  
 const router = express.Router();
 
 router.get('/', getAllServices);
-router.get('/client/:clientId', getServicesByClient);
 router.post('/', createService);
 router.post('/upload', uploadMiddleware, uploadService);
 

@@ -1,5 +1,6 @@
 import Client from '../models/client.js';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 export const registerClient = async (req, res) => {
   try {
@@ -43,9 +44,22 @@ export const loginClient = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials." });
     }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        id: client._id, 
+        email: client.email, 
+        role: client.role 
+      }, 
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
     res.status(200).json({
       success: true,
       message: "Client logged in successfully.",
+      token: token,
       user: {
         id: client._id,
         name: client.name,

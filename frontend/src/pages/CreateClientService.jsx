@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Users, Plus, X, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Users, Plus, X, CheckCircle, Search } from 'lucide-react';
 import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,6 +12,7 @@ const CreateClientService = () => {
   
   const [clients, setClients] = useState([]);
   const [selectedClients, setSelectedClients] = useState([]);
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [serviceForm, setServiceForm] = useState({
     name: '',
     description: '',
@@ -35,6 +36,18 @@ const CreateClientService = () => {
     fetchClients();
   }, []);
 
+  // Filter clients based on search - show first 4 if no search, otherwise show all matching
+  const filteredClients = clients.filter(client => {
+    const matchesSearch = client.name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+                         client.email?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+                         client.company?.toLowerCase().includes(clientSearchTerm.toLowerCase());
+    
+    return matchesSearch;
+  });
+
+  // Show first 4 clients if no search term, otherwise show all filtered results
+  const displayedClients = clientSearchTerm ? filteredClients : filteredClients.slice(0, 4);
+
   const handleServiceFormChange = (e) => {
     const { name, value } = e.target;
     setServiceForm(prev => ({
@@ -51,6 +64,27 @@ const CreateClientService = () => {
         return [...prev, clientId];
       }
     });
+  };
+
+  const handleSelectAllClients = () => {
+    if (selectedClients.length === filteredClients.length) {
+      setSelectedClients([]);
+    } else {
+      setSelectedClients(filteredClients.map(client => client._id));
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'inactive':
+        return 'bg-red-100 text-red-800';
+      case 'enquiry':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -71,22 +105,51 @@ const CreateClientService = () => {
     try {
       const featuresArr = serviceForm.features.split(',').map(f => f.trim()).filter(Boolean);
       
-      // Create service for each selected client
-      const promises = selectedClients.map(clientId => 
-        api.post('/services', {
+      // Map frontend category to backend format
+      const categoryMapping = {
+        'camera': 'Camera',
+        'printer': 'Printer',
+        'website': 'Website',
+        'digital-marketing': 'Software',
+        'mobile-app': 'Software',
+        'it-consultation': 'Hardware'
+      };
+      
+      const backendCategory = categoryMapping[category] || 'Other';
+      
+      console.log('=== SERVICE CREATION START ===');
+      console.log('Creating services for clients:', selectedClients);
+      console.log('Service form data:', serviceForm);
+      console.log('Features array:', featuresArr);
+      console.log('Frontend category:', category);
+      console.log('Backend category:', backendCategory);
+      
+      // Create client service for each selected client using the new client service API
+      const promises = selectedClients.map(clientId => {
+        const clientServiceData = {
           ...serviceForm,
           features: featuresArr,
+          category: backendCategory, // Use the mapped category
           clientId: clientId,
-          source: 'admin'
-        })
-      );
+          assignedBy: user?.id, // Use current admin ID
+          status: 'active',
+          billingCycle: 'monthly'
+        };
+        console.log(`Creating client service for client ${clientId}:`, clientServiceData);
+        return api.post('/client-services', clientServiceData);
+      });
 
-      await Promise.all(promises);
+      const results = await Promise.all(promises);
+      console.log('=== SERVICE CREATION SUCCESS ===');
+      console.log('Services created successfully:', results.map(r => r.data));
+      console.log('Total services created:', results.length);
       
-      alert('Services created successfully for all selected clients!');
+      alert(`Services created successfully for ${results.length} client(s)!`);
       navigate('/admin-dashboard');
     } catch (error) {
+      console.error('=== SERVICE CREATION ERROR ===');
       console.error('Error creating services:', error);
+      console.error('Error response:', error.response?.data);
       alert('Error creating services. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -223,55 +286,91 @@ const CreateClientService = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Clients</h3>
               <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Users className="h-5 w-5 text-gray-600 mr-2" />
-                    <span className="text-sm font-medium text-gray-700">
-                      {selectedClients.length} client(s) selected
-                    </span>
-                  </div>
-                  {selectedClients.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedClients([])}
-                      className="text-sm text-red-600 hover:text-red-800"
-                    >
-                      Clear Selection
-                    </button>
-                  )}
-                </div>
+                                 {/* Search Controls */}
+                 <div className="mb-4 space-y-3">
+                   <div className="flex items-center space-x-3">
+                     <div className="flex-1 relative">
+                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                       <input
+                         type="text"
+                         placeholder="Search clients by name, email, or company..."
+                         value={clientSearchTerm}
+                         onChange={(e) => setClientSearchTerm(e.target.value)}
+                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       />
+                     </div>
+                   </div>
+                   
+                   <div className="flex items-center justify-between">
+                     <div className="flex items-center">
+                       <Users className="h-5 w-5 text-gray-600 mr-2" />
+                       <span className="text-sm font-medium text-gray-700">
+                         {selectedClients.length} client(s) selected
+                       </span>
+                       <span className="text-sm text-gray-500 ml-2">
+                         {clientSearchTerm ? `(${filteredClients.length} found)` : `(Showing first 4 of ${clients.length} clients)`}
+                       </span>
+                     </div>
+                     <div className="flex space-x-2">
+                       <button
+                         type="button"
+                         onClick={handleSelectAllClients}
+                         className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                       >
+                         {selectedClients.length === displayedClients.length ? 'Deselect All' : 'Select All'}
+                       </button>
+                       {selectedClients.length > 0 && (
+                         <button
+                           type="button"
+                           onClick={() => setSelectedClients([])}
+                           className="text-sm text-red-600 hover:text-red-800"
+                         >
+                           Clear Selection
+                         </button>
+                       )}
+                     </div>
+                   </div>
+                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
-                  {clients.map((client) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                  {displayedClients.map((client) => (
                     <div
                       key={client._id}
-                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
                         selectedClients.includes(client._id)
-                          ? 'border-blue-500 bg-blue-50'
+                          ? 'border-blue-500 bg-blue-50 shadow-md'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                       onClick={() => handleClientToggle(client._id)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">{client.name}</h4>
-                          <p className="text-sm text-gray-600">{client.email}</p>
+                          <h4 className="font-semibold text-gray-900 mb-1">{client.name}</h4>
+                          <p className="text-sm text-gray-600 mb-1">{client.email}</p>
                           <p className="text-sm text-gray-500">{client.phone}</p>
+                          {client.company && (
+                            <p className="text-sm text-gray-500 mt-1">{client.company}</p>
+                          )}
+                          <div className="mt-2">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
+                              {client.status ? client.status.charAt(0).toUpperCase() + client.status.slice(1) : 'Unknown'}
+                            </span>
+                          </div>
                         </div>
                         {selectedClients.includes(client._id) && (
-                          <CheckCircle className="h-5 w-5 text-blue-600" />
+                          <CheckCircle className="h-6 w-6 text-blue-600 ml-3" />
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
                 
-                {clients.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <Users className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                    <p>No clients found</p>
-                  </div>
-                )}
+                                 {displayedClients.length === 0 && (
+                   <div className="text-center py-8 text-gray-500">
+                     <Users className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                     <p>{clientSearchTerm ? 'No clients found matching your search' : 'No clients available'}</p>
+                   </div>
+                 )}
               </div>
             </div>
 

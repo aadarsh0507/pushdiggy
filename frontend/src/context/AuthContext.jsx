@@ -3,14 +3,22 @@ import api from '../api/api';
 
 const AuthContext = createContext();
 const USER_KEY = 'PushDiggy_user';
+const TOKEN_KEY = 'PushDiggy_token';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem(USER_KEY);
-    if (stored) setUser(JSON.parse(stored));
+    const storedUser = localStorage.getItem(USER_KEY);
+    const storedToken = localStorage.getItem(TOKEN_KEY);
+    if (storedUser) setUser(JSON.parse(storedUser));
+    if (storedToken) {
+      setToken(storedToken);
+      // Set the token in axios headers
+      api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+    }
     setLoading(false);
   }, []);
 
@@ -28,7 +36,15 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: `This account is not registered as ${expectedRole}.` };
       }
 
+      // Store user and token
       localStorage.setItem(USER_KEY, JSON.stringify(res.data.user));
+      if (res.data.token) {
+        localStorage.setItem(TOKEN_KEY, res.data.token);
+        setToken(res.data.token);
+        // Set the token in axios headers
+        api.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+      }
+
       setUser(res.data.user);
       return { success: true, user: res.data.user };
     } catch (err) {
@@ -56,13 +72,18 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(TOKEN_KEY);
     setUser(null);
+    setToken(null);
+    // Remove the token from axios headers
+    delete api.defaults.headers.common['Authorization'];
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        token,
         login,
         logout,
         register,
