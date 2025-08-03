@@ -7,6 +7,8 @@ console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '***set***' : undefined);
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import adminRoutes from './src/routes/adminRoutes.js';
 import clientRoutes from './src/routes/clientRoutes.js';
@@ -29,6 +31,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
 
 mongoose.connect(process.env.DATABASE_URL, {
   useNewUrlParser: true,

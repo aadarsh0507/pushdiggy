@@ -19,6 +19,7 @@ const ClientDashboard = () => {
     priority: 'medium'
   });
   const [clientData, setClientData] = useState(null);
+  const [clientServices, setClientServices] = useState([]); // New state for client services
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const [showInvoiceModal, setShowInvoiceModal] = useState(false); // New state for invoice modal
@@ -50,6 +51,11 @@ const ClientDashboard = () => {
         const billsRes = await api.get(`/billing/bills/client/${user.id}`);
         console.log('Response data from fetching bills:', billsRes.data); // Log billsRes.data
         setClientBills(billsRes.data);
+
+        console.log(`Fetching services for client ID: ${user.id}`);
+        const servicesRes = await api.get(`/services/client/${user.id}`);
+        console.log('Response data from fetching services:', servicesRes.data);
+        setClientServices(servicesRes.data);
 
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -332,7 +338,7 @@ const ClientDashboard = () => {
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
                           {request.status}
                         </span>
-                        <span className="text-xs text-gray-500">{new Date(request.date).toLocaleDateString()}</span>
+                        <span className="text-xs text-gray-500">{new Date(request.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
@@ -362,17 +368,40 @@ const ClientDashboard = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {clientData.services?.map((service, index) => (
-            <div key={index} className="bg-white rounded-lg shadow p-6">
+          {clientServices.map((service, index) => (
+            <div key={service._id || index} className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">{service.name}</h3>
                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-600">
-                  {service.status || 'Active'}
+                  Active
                 </span>
               </div>
               <p className="text-gray-600 mb-4">
                 {service.description || `Your ${service.name.toLowerCase()} service is running smoothly.`}
               </p>
+              {service.price && (
+                <div className="text-lg font-bold text-blue-600 mb-4">
+                  {service.price}
+                </div>
+              )}
+              {service.features && service.features.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Features:</h4>
+                  <div className="space-y-1">
+                    {service.features.slice(0, 3).map((feature, idx) => (
+                      <div key={idx} className="flex items-center text-sm text-gray-600">
+                        <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                        {feature}
+                      </div>
+                    ))}
+                    {service.features.length > 3 && (
+                      <div className="text-xs text-gray-500">
+                        +{service.features.length - 3} more features
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="flex space-x-3">
                 <button className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
                   Manage
@@ -383,7 +412,7 @@ const ClientDashboard = () => {
               </div>
             </div>
           ))}
-          {(!clientData.services || clientData.services.length === 0) && (
+          {clientServices.length === 0 && (
             <div className="col-span-2 text-center py-12">
               <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-xl text-gray-600 mb-2">No services assigned</p>
@@ -422,7 +451,7 @@ const ClientDashboard = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket Raised Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
                 </tr>
               </thead>
@@ -452,7 +481,7 @@ const ClientDashboard = () => {
                         {request.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(request.date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(request.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{request.assignedTo?.name || 'Not assigned'}</td>
                   </tr>
                 ))}
@@ -541,7 +570,7 @@ const ClientDashboard = () => {
   return (
 
       <>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900">

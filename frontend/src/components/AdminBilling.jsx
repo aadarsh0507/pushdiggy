@@ -13,8 +13,18 @@ const AdminBilling = ({ onBillCreated }) => {
   const [showBillModal, setShowBillModal] = useState(false);
   const [editingBill, setEditingBill] = useState(null);
   const [previewBillData, setPreviewBillData] = useState(null);
+  const [selectedClientFilter, setSelectedClientFilter] = useState('');
 
   const navigate = useNavigate();
+
+  // Filter tickets based on selected client ID
+  const filteredTickets = selectedClientFilter 
+    ? resolvedTicketsReadyForBilling.filter(ticket => {
+        const matches = ticket.clientId?._id === selectedClientFilter;
+        console.log(`Ticket: ${ticket.subject}, Client ID: ${ticket.clientId?._id}, Filter ID: ${selectedClientFilter}, Matches: ${matches}`);
+        return matches;
+      })
+    : resolvedTicketsReadyForBilling;
 
   const [billForm, setBillForm] = useState({
     invoiceNumber: '',
@@ -38,6 +48,7 @@ const AdminBilling = ({ onBillCreated }) => {
   const fetchResolvedTickets = async () => {
     try {
       const res = await api.get('/support-requests?readyForBilling=true');
+      console.log('Fetched resolved tickets:', res.data);
       setResolvedTicketsReadyForBilling(res.data);
     } catch (err) {
       console.error('Error fetching resolved tickets:', err);
@@ -47,6 +58,7 @@ const AdminBilling = ({ onBillCreated }) => {
   const fetchClients = async () => {
     try {
       const res = await api.get('/clients');
+      console.log('Fetched clients:', res.data);
       setClients(res.data);
     } catch (err) {
       console.error('Error fetching clients:', err);
@@ -227,9 +239,29 @@ const AdminBilling = ({ onBillCreated }) => {
 
       {resolvedTicketsReadyForBilling.length > 0 && (
         <div className="bg-white p-4 rounded shadow">
-          <h3 className="font-semibold mb-2">Resolved Tickets Ready for Billing</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold">Resolved Tickets Ready for Billing</h3>
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Filter by Client:</label>
+              <select
+                value={selectedClientFilter}
+                onChange={(e) => {
+                  console.log('Client filter changed to:', e.target.value);
+                  setSelectedClientFilter(e.target.value);
+                }}
+                className="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Clients</option>
+                {clients.map(client => (
+                  <option key={client._id} value={client._id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <ul className="space-y-2">
-            {resolvedTicketsReadyForBilling.map(ticket => (
+            {filteredTickets.map(ticket => (
               <li key={ticket._id} className="flex items-center justify-between border p-2 rounded">
                 <label className="flex items-center space-x-2">
                   <input
@@ -260,6 +292,10 @@ const AdminBilling = ({ onBillCreated }) => {
 
       {resolvedTicketsReadyForBilling.length === 0 && (
         <div className="text-gray-500 text-center">No resolved tickets available for billing.</div>
+      )}
+
+      {resolvedTicketsReadyForBilling.length > 0 && filteredTickets.length === 0 && (
+        <div className="text-gray-500 text-center">No resolved tickets found for the selected client.</div>
       )}
 
       {showPreview && previewBillData && (

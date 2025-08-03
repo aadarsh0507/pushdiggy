@@ -219,7 +219,7 @@ const AdminBills = ({ bills, clients, setBills }) => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">All Bills</h2>
         <div className="text-sm text-gray-600 bg-blue-50 px-3 py-2 rounded-lg">
-          💡 <strong>Tip:</strong> Check the "Complete" checkbox to disable editing for a bill
+          💡 <strong>Tip:</strong> Check the "Complete" checkbox to mark a bill as completed. This action is irreversible.
         </div>
       </div>
 
@@ -360,17 +360,24 @@ const AdminBills = ({ bills, clients, setBills }) => {
                         <input
                           type="checkbox"
                           checked={bill.isCompleted || false}
-                          onChange={(e) => handleBillCompletionChange(bill._id, e.target.checked)}
-                          disabled={updatingBills.has(bill._id)}
-                          className={`h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer ${
-                            updatingBills.has(bill._id) ? 'opacity-50 cursor-not-allowed' : ''
+                          onChange={(e) => {
+                            // Prevent unchecking if already completed
+                            if (bill.isCompleted) {
+                              alert('Cannot uncheck a completed bill. This action is irreversible.');
+                              return;
+                            }
+                            handleBillCompletionChange(bill._id, e.target.checked);
+                          }}
+                          disabled={updatingBills.has(bill._id) || bill.isCompleted}
+                          className={`h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 ${
+                            updatingBills.has(bill._id) || bill.isCompleted ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                           }`}
-                          title={bill.isCompleted ? "Mark as Pending" : "Mark as Completed"}
+                          title={bill.isCompleted ? "Cannot uncheck completed bill" : "Mark as Completed"}
                         />
                         <span className={`ml-2 text-xs ${
-                          updatingBills.has(bill._id) ? 'text-gray-400' : 'text-gray-600'
+                          updatingBills.has(bill._id) ? 'text-gray-400' : bill.isCompleted ? 'text-green-600 font-medium' : 'text-gray-600'
                         }`}>
-                          {updatingBills.has(bill._id) ? "Updating..." : (bill.isCompleted ? "Completed" : "Complete")}
+                          {updatingBills.has(bill._id) ? "Updating..." : (bill.isCompleted ? "Completed ✓" : "Complete")}
                         </span>
                       </div>
                     </td>

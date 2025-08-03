@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllClients, registerClient, loginClient, updateClientStatus, getClientById, updateClientGeneral, getActiveClientCount, toggleAMC } from '../controllers/clientController.js';
+import { getAllClients, registerClient, loginClient, updateClientStatus, getClientById, updateClientGeneral, getActiveClientCount, getTotalClientCount, toggleAMC } from '../controllers/clientController.js';
 import Client from '../models/client.js';
 
 
@@ -8,6 +8,7 @@ const router = express.Router();
 router.get('/', getAllClients);
 router.get('/active', getActiveClientCount);
 router.get('/count/active', getActiveClientCount);
+router.get('/count', getTotalClientCount);
 router.get('/debug/statuses', async (req, res) => {
   try {
     const clients = await Client.find({});

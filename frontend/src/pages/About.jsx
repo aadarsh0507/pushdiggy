@@ -1,39 +1,74 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { CheckCircle, Users, Award, TrendingUp, Target, Eye, Heart, User } from 'lucide-react';
 import pushDiggyLogo from '../assets/push_diggy_logo.png';
+import api from '../api/api';
 
 const About = () => {
   // Team members data
   const teamMembers = [
     {
       id: '1',
-      name: 'Surrendar',
+      name: 'Mr. Surendar',
       role: 'Founder & CEO',
       bio: 'Visionary leader with 8+ years of experience in IT services and business development. Passionate about transforming businesses through technology.',
       image: 'https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=400'
     },
     {
       id: '2',
-      name: 'Shanmugamani',
+      name: 'Mr. Shanmugamani',
       role: 'Technical Director',
       bio: 'Expert in web development, mobile apps, and digital marketing. Leads our technical team with innovative solutions and client-focused approach.',
       image: 'https://images.pexels.com/photos/3785077/pexels-photo-3785077.jpeg?auto=compress&cs=tinysrgb&w=400'
     },
     {
       id: '3',
-      name: 'Muruganantham',
+      name: 'Mr. Muruganantham',
       role: 'Senior Developer',
       bio: 'Full-stack developer specializing in modern web technologies, camera systems, and printer solutions. Delivers scalable and robust applications.',
       image: 'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=400'
     },
     {
       id: '4',
-      name: 'Shakthi Selvam',
+      name: 'Mr. Aadarsh',
+      role: 'Blockchain Developer',
+      bio: 'Specializing in modern web technologies, camera systems, and printer solutions. Delivers scalable and robust applications.',
+      image: 'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=400'
+    },
+    {
+      id: '4',
+      name: 'Mr. Shakthi Selvam',
       role: 'Digital Marketing Specialist',
+      bio: 'Creative digital marketing expert with expertise in SEO, social media, and content strategy. Drives online growth for our clients.',
+      image: 'https://images.pexels.com/photos/3184317/pexels-photo-3184317.jpeg?auto=compress&cs=tinysrgb&w=400'
+    },
+    {
+      id: '5',
+      name: 'Mr. Ajith Poongavanam',
+      role: 'Service Team Head',
       bio: 'Creative digital marketing expert with expertise in SEO, social media, and content strategy. Drives online growth for our clients.',
       image: 'https://images.pexels.com/photos/3184317/pexels-photo-3184317.jpeg?auto=compress&cs=tinysrgb&w=400'
     }
   ];
+
+  const [totalClientCount, setTotalClientCount] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTotalClientCount = async () => {
+      try {
+        console.log('Fetching total client count...');
+        const res = await api.get('/clients/count');
+        console.log('Total client count response:', res.data);
+        setTotalClientCount(res.data.count);
+      } catch (err) {
+        console.error('Error fetching total client count:', err);
+        setTotalClientCount(0);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchTotalClientCount();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -154,8 +189,8 @@ const About = () => {
                     <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
                       <User className="h-8 w-8 text-white" />
                     </div>
-                    <p className="text-gray-600 font-semibold">Photo</p>
-                    <p className="text-gray-500 text-sm">Coming Soon</p>
+                    {/* <p className="text-gray-600 font-semibold">Photo</p> */}
+                    {/* <p className="text-gray-500 text-sm">Coming Soon</p> */}
                   </div>
                 </div>
                 {/* Uncomment and replace with actual image when available */}
@@ -192,7 +227,13 @@ const About = () => {
               <div className="bg-white bg-opacity-20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-4xl font-bold mb-2">3+</h3>
+              <h3 className="text-4xl font-bold mb-2">
+                {statsLoading ? (
+                  <div className="animate-pulse bg-white bg-opacity-30 h-8 w-16 rounded mx-auto"></div>
+                ) : (
+                  `${totalClientCount}+`
+                )}
+              </h3>
               <p className="text-blue-100">Satisfied Clients</p>
             </div>
             <div className="text-center">

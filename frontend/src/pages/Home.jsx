@@ -8,7 +8,7 @@ const Home = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [activeClientCount, setActiveClientCount] = useState(0);
+  const [totalClientCount, setTotalClientCount] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,24 +37,22 @@ const Home = () => {
     fetchServices();
   }, []);
 
-  // Fetch active client count
+  // Fetch total client count
   useEffect(() => {
-    const fetchActiveClientCount = async () => {
+    const fetchTotalClientCount = async () => {
       try {
-        console.log('Fetching active client ...');
-        const res = await api.get('/clients/count/active');
-        console.log('Active client count response:', res.data);
-        setActiveClientCount(res.data.count);
+        console.log('Fetching total client count...');
+        const res = await api.get('/clients/count');
+        console.log('Total client count response:', res.data);
+        setTotalClientCount(res.data.count);
       } catch (err) {
-        console.error('Error fetching active client count:', err);
-        console.error('Error details:', err.response?.data || err.message);
-        // Fallback to 0 if API fails
-        setActiveClientCount(0);
+        console.error('Error fetching total client count:', err);
+        setTotalClientCount(0);
       } finally {
         setStatsLoading(false);
       }
     };
-    fetchActiveClientCount();
+    fetchTotalClientCount();
   }, []);
 
   const featuredServices = services.slice(0, 3);
@@ -223,10 +221,10 @@ const Home = () => {
                 {statsLoading ? (
                   <div className="animate-pulse bg-gray-300 h-8 w-16 rounded mx-auto"></div>
                 ) : (
-                  `${activeClientCount}+`
+                  `${totalClientCount}+`
                 )}
               </h3>
-              <p className="text-gray-600">Happy Clients</p>
+              <p className="text-gray-600">Total Clients</p>
             </div>
             <div className="text-center">
               <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">

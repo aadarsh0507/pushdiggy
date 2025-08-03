@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Star, Camera, Printer, Globe, TrendingUp, Smartphone, Briefcase } from 'lucide-react';
+import { CheckCircle, Star, Camera, Printer, Globe, TrendingUp, Smartphone, Briefcase, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // Import useAuth
 import api from '../api/api';
 
-
-
 const Services = () => {
   const [services, setServices] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showDescription, setShowDescription] = useState(false);
   const navigate = useNavigate();
 
   const { user } = useAuth(); // Use the useAuth hook
@@ -24,7 +24,7 @@ const Services = () => {
     fetchServices();
   }, []);
 
-  // Service categories with icons and descriptions
+  // Service categories with icons, descriptions, images, and device descriptions
   const serviceCategories = [
     {
       name: 'Camera Services',
@@ -32,7 +32,9 @@ const Services = () => {
       description: 'Professional camera installation and surveillance solutions',
       color: 'from-purple-600 to-blue-600',
       hoverColor: 'hover:border-purple-500 hover:bg-purple-50',
-      category: 'camera'
+      category: 'camera',
+      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop',
+      deviceDescription: 'High-definition security cameras with night vision capabilities, motion detection, and remote monitoring. Perfect for both residential and commercial security needs. Features include 4K resolution, weather-resistant housing, and cloud storage integration.'
     },
     {
       name: 'Printer Services',
@@ -40,7 +42,9 @@ const Services = () => {
       description: 'Printer setup, maintenance, and support services',
       color: 'from-orange-600 to-red-600',
       hoverColor: 'hover:border-orange-500 hover:bg-orange-50',
-      category: 'printer'
+      category: 'printer',
+      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop',
+      deviceDescription: 'Professional-grade printers and multifunction devices for office environments. Includes laser printers, inkjet printers, and all-in-one devices with scanning, copying, and faxing capabilities. Network-ready with wireless connectivity options.'
     },
     {
       name: 'Website Services',
@@ -48,7 +52,9 @@ const Services = () => {
       description: 'Custom website development and web solutions',
       color: 'from-green-600 to-teal-600',
       hoverColor: 'hover:border-green-500 hover:bg-green-50',
-      category: 'website'
+      category: 'website',
+      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop',
+      deviceDescription: 'Modern web development services including responsive design, e-commerce solutions, and content management systems. Built with the latest technologies like React, Node.js, and cloud hosting. SEO-optimized with fast loading times.'
     },
     {
       name: 'Digital Marketing',
@@ -56,7 +62,9 @@ const Services = () => {
       description: 'Digital marketing and online promotion services',
       color: 'from-pink-600 to-purple-600',
       hoverColor: 'hover:border-pink-500 hover:bg-pink-50',
-      category: 'digital-marketing'
+      category: 'digital-marketing',
+      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop',
+      deviceDescription: 'Comprehensive digital marketing solutions including SEO, social media management, PPC campaigns, and content marketing. Data-driven strategies with analytics and reporting. Helps businesses increase online visibility and drive conversions.'
     },
     {
       name: 'Mobile Apps',
@@ -64,7 +72,9 @@ const Services = () => {
       description: 'Mobile application development services',
       color: 'from-indigo-600 to-blue-600',
       hoverColor: 'hover:border-indigo-500 hover:bg-indigo-50',
-      category: 'mobile-app'
+      category: 'mobile-app',
+      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop',
+      deviceDescription: 'Native and cross-platform mobile app development for iOS and Android. Features include push notifications, offline functionality, and integration with backend services. User experience focused design with intuitive interfaces.'
     },
     {
       name: 'IT Consultation',
@@ -72,9 +82,40 @@ const Services = () => {
       description: 'IT consulting and strategic technology solutions',
       color: 'from-amber-600 to-orange-600',
       hoverColor: 'hover:border-amber-500 hover:bg-amber-50',
-      category: 'it-consultation'
+      category: 'it-consultation',
+      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop',
+      deviceDescription: 'Strategic IT consulting services to help businesses optimize their technology infrastructure. Includes technology assessment, digital transformation planning, and implementation guidance. Expert advice on software selection and system integration.'
     }
   ];
+
+  const handleIconClick = (category) => {
+    // Navigate to specific service pages for each category
+    const serviceRoutes = {
+      'camera': '/camera-services',
+      'printer': '/printer-services',
+      'website': '/website-services',
+      'digital-marketing': '/digital-marketing-services',
+      'mobile-app': '/mobile-app-services',
+      'it-consultation': '/it-consultation-services'
+    };
+    
+    const route = serviceRoutes[category.category];
+    if (route) {
+      navigate(route);
+    } else {
+      setSelectedImage(category);
+      setShowDescription(false);
+    }
+  };
+
+  const handleImageClick = () => {
+    setShowDescription(!showDescription);
+  };
+
+  const handleCloseImage = () => {
+    setSelectedImage(null);
+    setShowDescription(false);
+  };
 
   return (
     <div className="min-h-screen">
@@ -90,7 +131,57 @@ const Services = () => {
         </div>
       </section>
 
-    
+      {/* Image Display Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
+            <button
+              onClick={handleCloseImage}
+              className="absolute top-4 right-4 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+            >
+              <X className="h-6 w-6 text-gray-600" />
+            </button>
+            
+            <div className="flex flex-col lg:flex-row">
+              {/* Image Section */}
+              <div className="lg:w-2/3 p-6">
+                <div className="text-center mb-4">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{selectedImage.name}</h3>
+                  <p className="text-gray-600">{selectedImage.description}</p>
+                </div>
+                <div className="relative">
+                  <img
+                    src={selectedImage.image}
+                    alt={selectedImage.name}
+                    className="w-full h-64 lg:h-96 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={handleImageClick}
+                  />
+                  <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded text-sm">
+                    Click image for details
+                  </div>
+                </div>
+              </div>
+
+              {/* Description Section */}
+              {showDescription && (
+                <div className="lg:w-1/3 p-6 bg-gray-50 border-l border-gray-200">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Device Description</h4>
+                  <p className="text-gray-700 leading-relaxed">{selectedImage.deviceDescription}</p>
+                  <div className="mt-6">
+                    <button
+                      onClick={() => navigate('/' + selectedImage.category + '-services')}
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Learn More
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -98,7 +189,7 @@ const Services = () => {
               Explore Our Service Categories
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Choose from our comprehensive range of IT services tailored to meet your business needs.
+              Click on any service icon to explore our detailed service pages with images and descriptions.
             </p>
           </div>
 
@@ -106,7 +197,7 @@ const Services = () => {
             {serviceCategories.map((category) => (
               <button
                 key={category.name}
-                onClick={() => navigate('/' + category.category + '-services')}
+                onClick={() => handleIconClick(category)}
                 className="flex flex-col items-center p-6 rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group bg-white shadow-lg hover:shadow-xl"
               >
                 <div className={`w-16 h-16 bg-gradient-to-r ${category.color} rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
@@ -196,4 +287,4 @@ const Services = () => {
   );
 };
 
-export default Services;
+export default Services; 

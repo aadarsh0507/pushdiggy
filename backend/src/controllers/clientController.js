@@ -184,6 +184,24 @@ export const getActiveClientCount = async (req, res) => {
   }
 };
 
+export const getTotalClientCount = async (req, res) => {
+  try {
+    console.log('getTotalClientCount function called');
+    
+    // Count all clients
+    const totalClientCount = await Client.countDocuments({});
+    console.log('Total client count:', totalClientCount);
+    
+    res.status(200).json({ 
+      success: true, 
+      count: totalClientCount
+    });
+  } catch (error) {
+    console.error('Error getting total client count:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 export const toggleAMC = async (req, res) => {
   try {
     const clientId = req.params.id;

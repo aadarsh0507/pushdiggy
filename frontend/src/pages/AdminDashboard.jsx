@@ -35,7 +35,9 @@ const AdminDashboard = () => {
     name: '',
     description: '',
     price: '',
-    features: ''
+    features: '',
+    category: 'general',
+    images: []
   });
 
   // Fetch clients from backend
@@ -57,7 +59,19 @@ const AdminDashboard = () => {
     const fetchServices = async () => {
       try {
         const res = await api.get('/services');
-        setServices(res.data);
+        // Filter out services created from public pages
+        // These services typically have images array and are created through the upload endpoint
+        const adminServices = res.data.filter(service => {
+          // Filter out services that were created from public pages
+          // Services created from public pages have images array and specific patterns
+          const hasImagesFromPublic = service.images && service.images.length > 0;
+          const hasPublicPattern = service.name === 'New Image' || service.name === 'Replaced Image';
+          
+          // Only show services that were created through admin dashboard
+          // (services without images array or with different patterns)
+          return !hasImagesFromPublic && !hasPublicPattern;
+        });
+        setServices(adminServices);
       } catch (err) {
         console.error('Error fetching services:', err);
       }
@@ -190,9 +204,6 @@ const AdminDashboard = () => {
     } else {
       try {
         const res = await api.post('/services', {
-            name: serviceForm.name,
-            description: serviceForm.description,
-            price: serviceForm.price,
           ...serviceForm,
           features: featuresArr
         });
@@ -201,11 +212,10 @@ const AdminDashboard = () => {
         console.error('Error creating service:', err);
       }
     }
-      // Clear form after successful submission (either create or update)
-      setServiceForm({ name: '', description: '', price: '', features: '' });
+    // Clear form after successful submission (either create or update)
+    setServiceForm({ name: '', description: '', price: '', features: '', category: 'general', images: [] });
     setShowServiceModal(false);
     setEditingService(null);
-    setServiceForm({ name: '', description: '', price: '', features: '' });
   };
 
   useEffect(() => {
@@ -214,10 +224,12 @@ const AdminDashboard = () => {
         name: editingService.name,
         description: editingService.description,
         price: editingService.price,
-        features: editingService.features.join(', ')
+        features: editingService.features.join(', '),
+        category: editingService.category || 'general',
+        images: editingService.images || []
       });
     } else {
-      setServiceForm({ name: '', description: '', price: '', features: '' });
+      setServiceForm({ name: '', description: '', price: '', features: '', category: 'general', images: [] });
     }
   }, [editingService, showServiceModal]);
 
@@ -765,7 +777,7 @@ const AdminDashboard = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-6">Service Categories</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Link
-            to="/admin/camera-services"
+            to="/create-client-service?category=camera"
             className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition-all duration-300 group"
           >
             <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -775,7 +787,7 @@ const AdminDashboard = () => {
           </Link>
 
           <Link
-            to="/admin/printer-services"
+            to="/create-client-service?category=printer"
             className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-orange-500 hover:bg-orange-50 transition-all duration-300 group"
           >
             <div className="w-12 h-12 bg-gradient-to-r from-orange-600 to-red-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -785,7 +797,7 @@ const AdminDashboard = () => {
           </Link>
 
           <Link
-            to="/admin/website-services"
+            to="/create-client-service?category=website"
             className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all duration-300 group"
           >
             <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-teal-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -795,7 +807,7 @@ const AdminDashboard = () => {
           </Link>
 
           <Link
-            to="/admin/digital-marketing-services"
+            to="/create-client-service?category=digital-marketing"
             className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-pink-500 hover:bg-pink-50 transition-all duration-300 group"
           >
             <div className="w-12 h-12 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -805,7 +817,7 @@ const AdminDashboard = () => {
           </Link>
 
           <Link
-            to="/admin/mobile-app-services"
+            to="/create-client-service?category=mobile-app"
             className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-300 group"
           >
             <div className="w-12 h-12 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -815,7 +827,7 @@ const AdminDashboard = () => {
           </Link>
 
           <Link
-            to="/admin/it-consultation-services"
+            to="/create-client-service?category=it-consultation"
             className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 hover:border-amber-500 hover:bg-amber-50 transition-all duration-300 group"
           >
             <div className="w-12 h-12 bg-gradient-to-r from-amber-600 to-orange-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -851,6 +863,11 @@ const AdminDashboard = () => {
             </div>
             <p className="text-gray-600 mb-4">{service.description}</p>
             <div className="text-xl font-bold text-blue-600 mb-4">{service.price}</div>
+            <div className="mb-4">
+              <span className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                {service.category}
+              </span>
+            </div>
             <div className="space-y-2">
               {service.features && service.features.slice(0, 3).map((feature, index) => (
                 <div key={index} className="flex items-center text-sm text-gray-600">
@@ -859,6 +876,26 @@ const AdminDashboard = () => {
                 </div>
               ))}
             </div>
+            {service.images && service.images.length > 0 && (
+              <div className="mt-4">
+                <h5 className="text-sm font-medium text-gray-900 mb-2">Images ({service.images.length})</h5>
+                <div className="grid grid-cols-3 gap-2">
+                  {service.images.slice(0, 3).map((image, index) => (
+                    <img
+                      key={index}
+                      src={image.url}
+                      alt={image.alt || image.title}
+                      className="w-full h-16 object-cover rounded"
+                    />
+                  ))}
+                  {service.images.length > 3 && (
+                    <div className="w-full h-16 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                      +{service.images.length - 3} more
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -921,6 +958,87 @@ const AdminDashboard = () => {
                     required
                     className="mt-1 block w-full border border-gray-300 rounded-md p-2"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Category</label>
+                  <select
+                    name="category"
+                    value={serviceForm.category}
+                    onChange={handleServiceFormChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  >
+                    <option value="general">General</option>
+                    <option value="camera">Camera</option>
+                    <option value="printer">Printer</option>
+                    <option value="website">Website</option>
+                    <option value="digital-marketing">Digital Marketing</option>
+                    <option value="mobile-app">Mobile App</option>
+                    <option value="it-consultation">IT Consultation</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Images</label>
+                  <div className="space-y-2">
+                    {serviceForm.images.map((image, index) => (
+                      <div key={index} className="flex space-x-2">
+                        <input
+                          type="text"
+                          placeholder="Image URL"
+                          value={image.url}
+                          onChange={(e) => {
+                            const newImages = [...serviceForm.images];
+                            newImages[index].url = e.target.value;
+                            setServiceForm({ ...serviceForm, images: newImages });
+                          }}
+                          className="flex-1 border border-gray-300 rounded-md p-2"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Title"
+                          value={image.title}
+                          onChange={(e) => {
+                            const newImages = [...serviceForm.images];
+                            newImages[index].title = e.target.value;
+                            setServiceForm({ ...serviceForm, images: newImages });
+                          }}
+                          className="flex-1 border border-gray-300 rounded-md p-2"
+                        />
+                        <textarea
+                          placeholder="Description"
+                          value={image.description}
+                          onChange={(e) => {
+                            const newImages = [...serviceForm.images];
+                            newImages[index].description = e.target.value;
+                            setServiceForm({ ...serviceForm, images: newImages });
+                          }}
+                          className="flex-1 border border-gray-300 rounded-md p-2"
+                          rows="2"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newImages = serviceForm.images.filter((_, i) => i !== index);
+                            setServiceForm({ ...serviceForm, images: newImages });
+                          }}
+                          className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setServiceForm({
+                          ...serviceForm,
+                          images: [...serviceForm.images, { url: '', title: '', description: '', tags: [] }]
+                        });
+                      }}
+                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                    >
+                      Add Image
+                    </button>
+                  </div>
                 </div>
                 <div className="flex justify-end space-x-3 mt-6">
                   <button
@@ -1082,7 +1200,7 @@ const AdminDashboard = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
@@ -1096,7 +1214,7 @@ const AdminDashboard = () => {
             {[
               { key: 'overview', label: 'Overview', icon: BarChart3 },
               { key: 'clients', label: 'Clients', icon: Users },
-              { key: 'services', label: 'Services', icon: Settings },
+              { key: 'services', label: 'Client Service', icon: Settings },
               { key: 'messages', label: 'Messages', icon: MessageSquare },
               { key: 'support', label: 'Support Tickets', icon: MessageSquare }, // Reusing MessageSquare for now
               { key: 'billing', label: 'Billing', icon: CreditCard },

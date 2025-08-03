@@ -10,6 +10,32 @@ const ServiceSchema = new mongoose.Schema({
     enum: ['camera', 'printer', 'website', 'digital-marketing', 'mobile-app', 'it-consultation', 'general'],
     default: 'general'
   },
+  // Source field to distinguish between admin-created and public-created services
+  source: {
+    type: String,
+    enum: ['admin', 'public'],
+    default: 'admin'
+  },
+  // Service images and descriptions for the public services page
+  images: [{
+    url: {
+      type: String,
+      required: true
+    },
+    title: {
+      type: String,
+      default: ''
+    },
+    description: {
+      type: String,
+      default: ''
+    },
+    tags: [String],
+    alt: {
+      type: String,
+      default: ''
+    }
+  }],
   // Category-specific fields
   cameraType: String,
   resolution: String,

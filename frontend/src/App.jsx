@@ -21,6 +21,7 @@ import WebsiteServices from './pages/WebsiteServices';
 import DigitalMarketingServices from './pages/DigitalMarketingServices';
 import MobileAppServices from './pages/MobileAppServices';
 import ITConsultationServices from './pages/ITConsultationServices';
+import CreateClientService from './pages/CreateClientService';
 
 
 function App() {
@@ -159,6 +160,19 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            
+            {/* Create Client Service Route */}
+            <Route
+              path="/create-client-service"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Layout>
+                    <CreateClientService />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

@@ -1,331 +1,631 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Users, Lightbulb, Plus, Edit, Trash2, CheckCircle, Award } from 'lucide-react';
-import api from '../api/api';
-import ServiceNavigation from '../components/ServiceNavigation';
+import { ArrowLeft, X, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/api';
 
-const ITConsultationServices = ({ showAdminNav = false }) => {
-  const { user } = useAuth(); // Use the useAuth hook
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+const ITConsultationServices = () => {
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showDescription, setShowDescription] = useState(false);
+  const [showAddImageModal, setShowAddImageModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [editingService, setEditingService] = useState(null);
-  const [formData, setFormData] = useState({
+  const [newImage, setNewImage] = useState({
     name: '',
-    description: '',
-    price: '',
-    features: '',
-    consultationType: '',
-    duration: '',
-    expertise: ''
+    image: null,
+    description: ''
   });
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [itConsultationImages, setItConsultationImages] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  // Fetch IT consultation services from backend
   useEffect(() => {
-    fetchConsultationServices();
+    const fetchItConsultationServices = async () => {
+      try {
+        const res = await api.get('/services');
+        const itConsultationServices = res.data.filter(service => service.category === 'it-consultation');
+        setItConsultationImages(itConsultationServices);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching IT consultation services:', err);
+        setLoading(false);
+      }
+    };
+    fetchItConsultationServices();
   }, []);
 
-  const fetchConsultationServices = async () => {
-    try {
-      const res = await api.get('/services?category=it-consultation');
-      setServices(res.data);
-    } catch (err) {
-      console.error('Error fetching consultation services:', err);
-    } finally {
-      setLoading(false);
-    }
+  const handleImageClick = (image) => {
+    setSelectedImage(image);
+    setShowDescription(false);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const featuresArr = formData.features.split(',').map(f => f.trim()).filter(Boolean);
-    
-    try {
-      if (editingService) {
-        await api.put(`/services/${editingService._id}`, {
-          ...formData,
-          category: 'it-consultation',
-          features: featuresArr
-        });
-      } else {
-        await api.post('/services', {
-          ...formData,
-          category: 'it-consultation',
-          features: featuresArr
-        });
-      }
-      fetchConsultationServices();
-      setShowModal(false);
-      setEditingService(null);
-      setFormData({
-        name: '', description: '', price: '', features: '',
-        consultationType: '', duration: '', expertise: ''
-      });
-    } catch (err) {
-      console.error('Error saving service:', err);
-    }
+  const handleImageDescriptionClick = () => {
+    setShowDescription(!showDescription);
   };
 
-  const deleteService = async (id) => {
+  const handleCloseImage = () => {
+    setSelectedImage(null);
+    setShowDescription(false);
+  };
+
+  const handleEditService = (service) => {
+    setEditingService(service);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteService = async (serviceId) => {
     if (window.confirm('Are you sure you want to delete this service?')) {
       try {
-        await api.delete(`/services/${id}`);
-        fetchConsultationServices();
-      } catch (err) {
-        console.error('Error deleting service:', err);
+        await api.delete(`/services/${serviceId}`);
+        // Refresh the services data
+        const res = await api.get('/services');
+        const itConsultationServices = res.data.filter(service => service.category === 'it-consultation');
+        setItConsultationImages(itConsultationServices);
+        setSelectedImage(null);
+        alert('Service deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting service:', error);
+        alert('Error deleting service. Please try again.');
       }
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      await api.put(`/services/${editingService._id}`, editingService);
+      // Refresh the services data
+      const res = await api.get('/services');
+      const itConsultationServices = res.data.filter(service => service.category === 'it-consultation');
+      setItConsultationImages(itConsultationServices);
+      setShowEditModal(false);
+      setEditingService(null);
+      alert('Service updated successfully!');
+    } catch (error) {
+      console.error('Error updating service:', error);
+      alert('Error updating service. Please try again.');
+    }
+  };
+
+  const handleAddImageToService = async () => {
+    if (!editingService.newImageFile) {
+      alert('Please select an image file first.');
+      return;
+    }
+
+    try {
+      // First, upload the image file to get the actual URL
+      const formData = new FormData();
+      formData.append('name', 'New Image');
+      formData.append('description', '');
+      formData.append('price', 'Contact for pricing');
+      formData.append('features', 'IT Consultation Services');
+      formData.append('category', 'it-consultation');
+      formData.append('image', editingService.newImageFile);
+
+      const uploadResponse = await api.post('/services/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Get the uploaded service with the actual image URL
+      const uploadedService = uploadResponse.data;
+      const newImageUrl = uploadedService.images[0].url;
+
+      // Create a new image object with the actual URL
+      const newImage = {
+        url: newImageUrl,
+        title: 'New Image',
+        description: '',
+        tags: ['it-consultation', 'service']
+      };
+
+      // Add the new image to the existing service
+      const updatedImages = [...(editingService.images || []), newImage];
+      
+      // Update the service with the new image
+      await api.put(`/services/${editingService._id}`, {
+        ...editingService,
+        images: updatedImages
+      });
+
+      // Update the local state
+      setEditingService({
+        ...editingService,
+        images: updatedImages,
+        newImageFile: null,
+        showAddImageForm: false
+      });
+
+      // Refresh the services data
+      const res = await api.get('/services');
+      const itConsultationServices = res.data.filter(service => service.category === 'it-consultation');
+      setItConsultationImages(itConsultationServices);
+
+      alert('Image added successfully!');
+    } catch (error) {
+      console.error('Error adding image:', error);
+      let errorMessage = 'Error adding image. Please try again.';
+      
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      alert(errorMessage);
+    }
+  };
+
+  const handleAddImage = async (e) => {
+    e.preventDefault();
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('name', newImage.name);
+      formData.append('description', newImage.description);
+      formData.append('price', 'Contact for pricing');
+      formData.append('features', 'IT Consultation Services');
+      formData.append('category', 'it-consultation');
+      formData.append('image', newImage.image);
+
+      await api.post('/services/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      // Reset form and close modal
+      setNewImage({ name: '', image: null, description: '' });
+      setShowAddImageModal(false);
+      
+      // Refresh the services data
+      const res = await api.get('/services');
+      const itConsultationServices = res.data.filter(service => service.category === 'it-consultation');
+      setItConsultationImages(itConsultationServices);
+      
+      // Show success message
+      alert('Image added successfully!');
+    } catch (error) {
+      console.error('Error adding image:', error);
+      let errorMessage = 'Error adding image. Please try again.';
+      
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      alert(errorMessage);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
-      <ServiceNavigation title="IT Consultation Services" showAdminNav={showAdminNav} />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-amber-600 to-orange-600 rounded-full mb-6">
-            <Briefcase className="h-10 w-10 text-white" />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-gradient-to-br from-amber-600 to-orange-600 text-white py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => navigate('/services')}
+                className="p-2 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-colors"
+              >
+                <ArrowLeft className="h-6 w-6" />
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold">IT Consultation Services</h1>
+                <p className="text-amber-100">Strategic IT consulting and technology solutions</p>
+              </div>
+            </div>
+            {/* Admin Plus Icon - Only visible to admins */}
+            {user && user.role === 'admin' && (
+              <button
+                onClick={() => setShowAddImageModal(true)}
+                className="p-3 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-colors flex items-center space-x-2"
+              >
+                <Plus className="h-6 w-6" />
+                <span className="text-sm font-medium">Add Image</span>
+              </button>
+            )}
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">IT Consultation Services</h1>
+        </div>
+      </div>
+
+      {/* Add Image Modal */}
+      {showAddImageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Add New IT Consultation Image</h3>
+              <button
+                onClick={() => setShowAddImageModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <form onSubmit={handleAddImage} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Image Name</label>
+                <input
+                  type="text"
+                  value={newImage.name}
+                  onChange={(e) => setNewImage({ ...newImage, name: e.target.value })}
+                  required
+                  className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  placeholder="e.g., IT Strategy Consulting"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Image Attachment</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setNewImage({ ...newImage, image: e.target.files[0] })}
+                  required
+                  className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                />
+                <p className="text-xs text-gray-500 mt-1">Accepted formats: JPG, PNG, GIF (Max 5MB)</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  value={newImage.description}
+                  onChange={(e) => setNewImage({ ...newImage, description: e.target.value })}
+                  required
+                  rows="4"
+                  className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  placeholder="Detailed description of the IT consultation service..."
+                />
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddImageModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-md hover:bg-amber-700"
+                >
+                  Add Image
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Image Display Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
+            <button
+              onClick={handleCloseImage}
+              className="absolute top-4 right-4 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+            >
+              <X className="h-6 w-6 text-gray-600" />
+            </button>
+            
+            <div className="flex flex-col lg:flex-row">
+              {/* Image Section */}
+              <div className="lg:w-2/3 p-6">
+                <div className="text-center mb-4">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{selectedImage.name}</h3>
+                </div>
+                <div className="relative">
+                  {selectedImage.images && selectedImage.images.length > 0 ? (
+                    <img
+                      src={selectedImage.images[0].url}
+                      alt={selectedImage.name}
+                      className="w-full h-64 lg:h-96 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={handleImageDescriptionClick}
+                    />
+                  ) : (
+                    <div className="w-full h-64 lg:h-96 bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-500">No image available</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded text-sm">
+                    Click image for details
+                  </div>
+                </div>
+              </div>
+
+              {/* Description Section */}
+              {showDescription && (
+                <div className="lg:w-1/3 p-6 bg-gray-50 border-l border-gray-200">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Service Details</h4>
+                  <p className="text-gray-700 leading-relaxed mb-4">{selectedImage.description}</p>
+                  <p className="text-blue-600 font-semibold mb-4">{selectedImage.price}</p>
+                  {selectedImage.features && (
+                    <div className="mb-4">
+                      <h5 className="font-medium text-gray-900 mb-2">Features:</h5>
+                      <p className="text-gray-700 text-sm">{selectedImage.features}</p>
+                    </div>
+                  )}
+                  <div className="mt-6">
+                    <button
+                      onClick={() => navigate('/contact')}
+                      className="w-full bg-amber-600 text-white py-2 px-4 rounded-lg hover:bg-amber-700 transition-colors"
+                    >
+                      Get Quote
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Consultation Images Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Our IT Consultation Solutions
+          </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Expert IT consultation and strategic guidance to optimize your technology infrastructure and business processes
+            Click on any consultation service to view detailed specifications and features.
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <Briefcase className="h-8 w-8 text-amber-600 mx-auto mb-3" />
-            <h3 className="text-2xl font-bold text-gray-900">{services.length}</h3>
-            <p className="text-gray-600">Active Services</p>
+                {loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 text-lg">Loading IT consultation services...</p>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <Users className="h-8 w-8 text-orange-600 mx-auto mb-3" />
-            <h3 className="text-2xl font-bold text-gray-900">Expert</h3>
-            <p className="text-gray-600">Consultants</p>
+        ) : itConsultationImages.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {itConsultationImages.map((consultation) => (
+              <div
+                key={consultation._id}
+                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group relative"
+              >
+                <div 
+                  className="relative cursor-pointer"
+                  onClick={() => handleImageClick(consultation)}
+                >
+                  {consultation.images && consultation.images.length > 0 ? (
+                    <img
+                      src={consultation.images[0].url}
+                      alt={consultation.name}
+                      className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-500">No image available</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300"></div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                    <h3 className="text-white text-lg font-bold">{consultation.name}</h3>
+                  </div>
+                </div>
+                
+                {/* Admin Edit/Delete Buttons */}
+                {user && user.role === 'admin' && (
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditService(consultation);
+                      }}
+                      className="bg-amber-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-amber-700 transition-colors shadow-lg"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteService(consultation._id);
+                      }}
+                      className="bg-red-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-700 transition-colors shadow-lg"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <Lightbulb className="h-8 w-8 text-yellow-600 mx-auto mb-3" />
-            <h3 className="text-2xl font-bold text-gray-900">Strategic</h3>
-            <p className="text-gray-600">Solutions</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <Award className="h-8 w-8 text-green-600 mx-auto mb-3" />
-            <h3 className="text-2xl font-bold text-gray-900">Proven</h3>
-            <p className="text-gray-600">Results</p>
-          </div>
-        </div>
-
-        {/* Add Service Button */}
-        {user?.role === 'admin' && showAdminNav && (
-          <div className="flex justify-end mb-6">
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-6 py-3 rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300 flex items-center"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Add Consultation Service
-            </button>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-600 text-lg">No IT consultation services available at the moment.</p>
           </div>
         )}
 
-        {/* Services Grid */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+        {/* CTA Section */}
+        <div className="mt-16 text-center">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              Need Strategic IT Guidance?
+            </h3>
+            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+              Our experts can provide strategic IT consulting tailored to your business needs and technology goals.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={() => navigate('/contact')}
+                className="bg-amber-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-amber-700 transition-colors"
+              >
+                Get Free Consultation
+              </button>
+              <button
+                onClick={() => navigate('/services')}
+                className="border-2 border-amber-600 text-amber-600 px-6 py-3 rounded-lg font-semibold hover:bg-amber-50 transition-colors"
+              >
+                View All Services
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((service) => (
-              <div key={service._id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                <div className="bg-gradient-to-r from-amber-600 to-orange-600 p-6 text-white">
-                  <div className="flex justify-between items-start">
-                    <Briefcase className="h-8 w-8" />
-                    {user?.role === 'admin' && showAdminNav && (
-                      <div className="flex space-x-2">
-                      <button
-                        onClick={() => {
-                          setEditingService(service);
-                          setFormData({
-                            name: service.name,
-                            description: service.description,
-                            price: service.price,
-                            features: service.features?.join(', ') || '',
-                            consultationType: service.consultationType || '',
-                            duration: service.duration || '',
-                            expertise: service.expertise || ''
-                          });
-                          setShowModal(true);
-                        }}
-                        className="text-white hover:text-amber-200"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteService(service._id)}
-                        className="text-white hover:text-red-200"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                                              </button>
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="text-xl font-bold mt-4">{service.name}</h3>
-                  <p className="text-amber-100 mt-2">{service.description}</p>
+        </div>
+      </div>
+
+      {/* Edit Service Modal */}
+      {showEditModal && editingService && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-3xl font-bold text-gray-900">Edit Service</h3>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="bg-gray-100 rounded-full p-2 hover:bg-gray-200 transition-colors"
+                >
+                  <X className="h-6 w-6 text-gray-600" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <div className="space-y-6">
+                {/* Service Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Service Name</label>
+                  <input
+                    type="text"
+                    value={editingService.name}
+                    onChange={(e) => setEditingService({...editingService, name: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
                 </div>
-                <div className="p-6">
-                  <div className="text-2xl font-bold text-amber-600 mb-4">{service.price}</div>
-                  {service.consultationType && (
-                    <div className="mb-2">
-                      <span className="text-sm font-medium text-gray-600">Type:</span>
-                      <span className="ml-2 text-sm text-gray-900">{service.consultationType}</span>
+
+                {/* Service Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Service Description</label>
+                  <textarea
+                    value={editingService.description}
+                    onChange={(e) => setEditingService({...editingService, description: e.target.value})}
+                    rows="6"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter service description..."
+                  />
+                </div>
+
+                {/* Images Section */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-4">Images</label>
+                  
+                  {/* Add New Image Button */}
+                  <div className="mb-4">
+                    <button
+                      onClick={() => setEditingService({
+                        ...editingService,
+                        showAddImageForm: true
+                      })}
+                      className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700"
+                    >
+                      + Add New Image
+                    </button>
+                  </div>
+
+                  {/* Add New Image Form */}
+                  {editingService.showAddImageForm && (
+                    <div className="mb-6 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="text-sm font-medium text-gray-700">Add New Image</h4>
+                        <button
+                          onClick={() => setEditingService({
+                            ...editingService,
+                            showAddImageForm: false,
+                            newImageFile: null
+                          })}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files[0]) {
+                              setEditingService({
+                                ...editingService,
+                                newImageFile: e.target.files[0]
+                              });
+                            }
+                          }}
+                          className="w-full border border-gray-300 rounded p-2"
+                        />
+                        <button
+                          onClick={handleAddImageToService}
+                          disabled={!editingService.newImageFile}
+                          className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                          Add Image
+                        </button>
+                      </div>
                     </div>
                   )}
-                  {service.duration && (
-                    <div className="mb-2">
-                      <span className="text-sm font-medium text-gray-600">Duration:</span>
-                      <span className="ml-2 text-sm text-gray-900">{service.duration}</span>
-                    </div>
-                  )}
-                  {service.expertise && (
-                    <div className="mb-4">
-                      <span className="text-sm font-medium text-gray-600">Expertise:</span>
-                      <span className="ml-2 text-sm text-gray-900">{service.expertise}</span>
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    {service.features?.slice(0, 3).map((feature, index) => (
-                      <div key={index} className="flex items-center text-sm text-gray-600">
-                        <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                        {feature}
+
+                  {/* Existing Images */}
+                  <div className="space-y-4">
+                    {editingService.images && editingService.images.map((image, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <div className="flex items-start gap-4">
+                          <img src={image.url} alt={image.title} className="w-20 h-20 object-cover rounded" />
+                          <div className="flex-1 space-y-3">
+                            <input
+                              type="text"
+                              placeholder="Image Title"
+                              value={image.title || ''}
+                              onChange={(e) => {
+                                const newImages = [...editingService.images];
+                                newImages[index] = {...newImages[index], title: e.target.value};
+                                setEditingService({...editingService, images: newImages});
+                              }}
+                              className="w-full border border-gray-300 rounded p-2"
+                            />
+                            <textarea
+                              placeholder="Image Description"
+                              value={image.description || ''}
+                              onChange={(e) => {
+                                const newImages = [...editingService.images];
+                                newImages[index] = {...newImages[index], description: e.target.value};
+                                setEditingService({...editingService, images: newImages});
+                              }}
+                              rows="3"
+                              className="w-full border border-gray-300 rounded p-2"
+                            />
+                          </div>
+                          <button
+                            onClick={() => {
+                              const newImages = editingService.images.filter((_, i) => i !== index);
+                              setEditingService({...editingService, images: newImages});
+                            }}
+                            className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
 
-        {/* Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-              <div className="mt-3">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    {editingService ? 'Edit Consultation Service' : 'Add Consultation Service'}
-                  </h3>
+                {/* Action Buttons */}
+                <div className="flex gap-4 pt-6 border-t border-gray-200">
                   <button
-                    onClick={() => {
-                      setShowModal(false);
-                      setEditingService(null);
-                      setFormData({
-                        name: '', description: '', price: '', features: '',
-                        consultationType: '', duration: '', expertise: ''
-                      });
-                    }}
-                    className="text-gray-400 hover:text-gray-600"
+                    onClick={handleSaveEdit}
+                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
                   >
-                    ✕
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-400 transition-colors"
+                  >
+                    Cancel
                   </button>
                 </div>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Service Name</label>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        required
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Price</label>
-                      <input
-                        type="text"
-                        value={formData.price}
-                        onChange={(e) => setFormData({...formData, price: e.target.value})}
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      required
-                      className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Consultation Type</label>
-                      <input
-                        type="text"
-                        value={formData.consultationType}
-                        onChange={(e) => setFormData({...formData, consultationType: e.target.value})}
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Duration</label>
-                      <input
-                        type="text"
-                        value={formData.duration}
-                        onChange={(e) => setFormData({...formData, duration: e.target.value})}
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Expertise</label>
-                      <input
-                        type="text"
-                        value={formData.expertise}
-                        onChange={(e) => setFormData({...formData, expertise: e.target.value})}
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Features (comma separated)</label>
-                    <input
-                      type="text"
-                      value={formData.features}
-                      onChange={(e) => setFormData({...formData, features: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-3 mt-6">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowModal(false);
-                        setEditingService(null);
-                        setFormData({
-                          name: '', description: '', price: '', features: '',
-                          consultationType: '', duration: '', expertise: ''
-                        });
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-orange-600 rounded-md hover:from-amber-700 hover:to-orange-700"
-                    >
-                      {editingService ? 'Update' : 'Add'}
-                    </button>
-                  </div>
-                </form>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
